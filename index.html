@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>究極ゲーム 記録・測定</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+  --text:#e6edf3; --muted:#8b949e; --dim:#6e7681;
+  --green:#3fb950; --red:#f85149; --amber:#d29922; --blue:#58a6ff; --purple:#bc8cff;
+  --mono:"SFMono-Regular",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;font-size:14px;line-height:1.6}
+header{padding:14px 20px 0;border-bottom:1px solid var(--border);background:var(--panel)}
+h1{font-size:18px;letter-spacing:.05em}
+h1 .ver{font-size:11px;color:var(--dim);font-weight:normal;margin-left:8px}
+.sub{font-size:11px;color:var(--muted);margin:2px 0 10px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav button{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;cursor:pointer;font-size:13px;font-family:inherit}
+nav button:hover{color:var(--text)}
+nav button.active{color:var(--text);border-bottom-color:var(--green)}
+main{padding:18px 20px;max-width:1100px;margin:0 auto}
+section{display:none}
+section.show{display:block}
+h2{font-size:15px;margin:18px 0 10px;color:var(--blue)}
+h2:first-child{margin-top:0}
+h3{font-size:13px;margin:14px 0 8px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px}
+.grid6{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.card.pos-card{cursor:pointer;transition:border-color .15s}
+.card.pos-card:hover{border-color:var(--blue)}
+.card .slot{font-size:11px;color:var(--muted);letter-spacing:.05em}
+.card .tick{font-size:16px;font-weight:bold;margin:2px 0}
+.card .tick small{font-weight:normal;color:var(--muted);font-size:12px;margin-left:6px}
+.card.overdue{border-color:var(--red)}
+.card.empty{border-style:dashed;color:var(--dim)}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:150px}
+.kpi .l{font-size:11px;color:var(--muted)}
+.kpi .v{font-size:22px;font-family:var(--mono);margin-top:2px}
+.kpi .n{font-size:11px;color:var(--dim)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--muted);font-weight:normal;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);font-size:12px}
+td{padding:6px 8px;border-bottom:1px solid #21262d;vertical-align:top}
+tr:hover td{background:#1a2029}
+tr.rowlink{cursor:pointer}
+.num{font-family:var(--mono);text-align:right}
+th.num{text-align:right}
+.pos{color:var(--green)}.neg{color:var(--red)}.warn{color:var(--amber)}.mut{color:var(--muted)}.dim{color:var(--dim)}
+.tag{display:inline-block;border:1px solid var(--border);border-radius:4px;padding:0 6px;font-size:11px;color:var(--muted);margin-right:4px}
+.tag.g{border-color:var(--green);color:var(--green)}
+.tag.r{border-color:var(--red);color:var(--red)}
+.tag.a{border-color:var(--amber);color:var(--amber)}
+.tag.b{border-color:var(--blue);color:var(--blue)}
+.tag.p{border-color:var(--purple);color:var(--purple)}
+select{background:#0a0e14;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:13px;padding:6px 8px}
+button.btn{background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 16px;cursor:pointer;font-size:13px;font-family:inherit}
+button.btn:hover{border-color:var(--muted)}
+button.btn.primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
+button.btn.danger{border-color:var(--red);color:var(--red)}
+button.btn.small{padding:3px 10px;font-size:12px}
+.msg{border-radius:6px;padding:8px 12px;margin:8px 0;font-size:13px}
+.msg.err{background:#2d1214;border:1px solid var(--red)}
+.msg.warn{background:#2b2211;border:1px solid var(--amber)}
+.msg.ok{background:#12261a;border:1px solid var(--green)}
+.msg.info{background:#121d2f;border:1px solid #1f6feb}
+canvas{background:#0a0e14;border:1px solid var(--border);border-radius:8px;width:100%;height:auto}
+.formrow{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:8px 0}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:11px;color:var(--muted)}
+.gatebar{height:8px;background:#21262d;border-radius:4px;overflow:hidden;margin-top:4px}
+.gatebar div{height:100%;background:var(--green)}
+.philosophy{font-size:12px;color:var(--dim);border-left:2px solid var(--border);padding-left:10px;margin:10px 0}
+.scn{display:inline-block;margin-right:12px;font-family:var(--mono);font-size:12px}
+footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
+/* 詳細モーダル */
+#modalBack{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10}
+#modalBack.show{display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow-y:auto}
+#modal{background:var(--panel);border:1px solid var(--border);border-radius:10px;max-width:720px;width:100%;padding:18px 20px;position:relative}
+#modalClose{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.detail-grid{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;font-size:13px;margin:8px 0}
+.detail-grid dt{color:var(--muted);font-size:12px}
+.thesis-box{background:#0a0e14;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;margin:8px 0;white-space:pre-wrap}
+.scorebar{display:flex;align-items:center;gap:8px;margin:2px 0;font-size:12px}
+.scorebar .lbl{width:110px;color:var(--muted)}
+.scorebar .bar{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
+.scorebar .bar div{height:100%;background:var(--blue)}
+.scorebar .val{width:24px;text-align:right;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header>
+  <h1>究極ゲーム 記録・測定<span class="ver" id="verLabel"></span></h1>
+  <div class="sub">これは"脳"ではなく"鏡" — 予測は月曜朝・答え合わせは土曜朝に自動反映されます</div>
+  <nav id="tabs">
+    <button data-tab="dash" class="active">ダッシュボード</button>
+    <button data-tab="rounds">ラウンド一覧</button>
+    <button data-tab="measure">測定 (Layer 1)</button>
+    <button data-tab="settings">設定</button>
+  </nav>
+</header>
+<main>
+  <div id="dataBanner"></div>
+  <section id="tab-dash" class="show"></section>
+  <section id="tab-rounds"></section>
+  <section id="tab-measure"></section>
+  <section id="tab-settings"></section>
+</main>
+<div id="modalBack"><div id="modal"><button id="modalClose">✕</button><div id="modalBody"></div></div></div>
+<footer>究極ゲーム 記録・測定システム — 単一HTML / data.js自動更新 / 外部依存なし</footer>
+<script src="data.js"></script>
+<script>
+"use strict";
+/* ================= 定数 ================= */
+const SCHEMA_VERSION = 1;
+const OVERRIDE_KEY = "ultimateGame_overrides_v1";
+const CRITERIA = [
+  {key:"themeMatch",     label:"テーマ合致"},
+  {key:"catalystStrength",label:"カタリスト強度"},
+  {key:"supplyDemand",   label:"需給"},
+  {key:"upside",         label:"上値余地"},
+  {key:"downsideControl",label:"下値管理"},
+  {key:"moneyFlow",      label:"資金流入"}
+];
+const EXCLUSIONS = [
+  {key:"expectationAhead",label:"期待先行"},
+  {key:"shortCover",     label:"踏み上げ/ショートカバー"},
+  {key:"athLongTerm",    label:"長期最高値圏"},
+  {key:"postIpoProxy",   label:"IPO直後・類似"}
+];
+const HORIZONS = {week:"週", month:"月", quarter:"季"};
+const MARKETS  = {JP:"日本", US:"米国"};
+const SCENARIOS = ["bull","base","bear"];
+const SCN_LABEL = {bull:"強気", base:"基本", bear:"弱気"};
+const LEARNING_TYPES = ["勝ちパターン候補","失敗パターン候補","ノイズ","規律"];
+const NAIVE_BRIER = 0.667;
+const GATE_MIN_RESOLVED = 20;
+const GATE_MIN_REGIMES  = 2;
+const ROLLING_WINDOW = 10;
+const DISC_NOISE_BAND = 0.5;
+const VAR_DEAD_BAND  = 0.35;
+/* ================= データ読み込み（data.js 駆動） ================= */
+let state = {schemaVersion:SCHEMA_VERSION, rounds:[], positions:[], retiredCriteria:{}, updatedAt:null};
+let dataProblems = [];
+(function loadData(){
+  const g = window.GAME_DATA;
+  if(!g){ dataProblems.push("data.js が読み込めません。アプリと同じフォルダに data.js があるか確認してください。"); return; }
+  if(g.schemaVersion !== SCHEMA_VERSION) dataProblems.push("schemaVersion不一致（データ:"+g.schemaVersion+" / アプリ:"+SCHEMA_VERSION+"）。表示は継続しますが要確認。");
+  state.rounds = Array.isArray(g.rounds)? g.rounds : [];
+  state.positions = Array.isArray(g.positions)? g.positions : [];
+  state.updatedAt = g.updatedAt || null;
+  // 整合性チェック（Garbage in → garbage learned の防波堤）
+  state.positions.forEach(p=>{
+    const tag = p.id||p.ticker||"?";
+    if(p.direction!=="キャッシュ"){
+      if(p.entry && !p.entry.date) dataProblems.push(tag+": entry.date 欠損（ルール1違反）");
+      if(p.scenarios){
+        const s = SCENARIOS.reduce((a,k)=>a+(p.scenarios[k]?p.scenarios[k].prob:0),0);
+        if(Math.abs(s-1)>0.001) dataProblems.push(tag+": シナリオ確率合計 "+s.toFixed(3)+" ≠ 1.0");
+      }
+      if(p.resolution && p.resolution.resultPrice && !p.resolution.resultPrice.date)
+        dataProblems.push(tag+": 結果価格に日付なし（ルール1違反）");
+    }
+    if(!state.rounds.some(r=>r.roundId===p.roundId)) dataProblems.push(tag+": 親ラウンド "+p.roundId+" が見つかりません");
+  });
+  // ローカル上書き（基準の削除確定は端末側に保持）
+  try{
+    const ov = JSON.parse(localStorage.getItem(OVERRIDE_KEY)||"{}");
+    state.retiredCriteria = ov.retiredCriteria||{};
+  }catch(e){ state.retiredCriteria = {}; }
+})();
+function saveOverrides(){
+  localStorage.setItem(OVERRIDE_KEY, JSON.stringify({retiredCriteria:state.retiredCriteria}));
+}
+/* ================= ユーティリティ ================= */
+const $ = s=>document.querySelector(s);
+function esc(x){ return String(x==null?"":x).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtNum(v,dec){ if(v==null||isNaN(v))return "—"; return Number(v).toLocaleString("ja-JP",{minimumFractionDigits:dec??0,maximumFractionDigits:dec??2}); }
+function fmtPct(v){ if(v==null||isNaN(v))return "—"; return (v>=0?"+":"")+v.toFixed(2)+"%"; }
+function pctClass(v){ return v>0?"pos":(v<0?"neg":"mut"); }
+function posLabel(p){ return HORIZONS[p.horizon]+"・"+MARKETS[p.market]; }
+function roundOf(p){ return state.rounds.find(r=>r.roundId===p.roundId); }
+function regimeKeyOf(p){ const r=roundOf(p); return (r&&r.regimeTag)? (r.regimeTag.vixBucket+"/"+r.regimeTag.trend) : "?"; }
+function mean(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : NaN; }
+function variance(a){ if(a.length<2)return NaN; const m=mean(a); return a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1); }
+function ppText(pp){
+  if(!pp) return "—";
+  return fmtNum(pp.value)+"（"+esc(pp.date||"日付なし")+" / "+esc(pp.priceType||"?")+" / "+esc(pp.source||"?")
+    +(pp.isEstimate?" / <span class='warn'>推定</span>":"")+(pp.isAdjusted===false?" / <span class='warn'>未調整</span>":"")+"）";
+}
+/* ================= 測定ロジック (Layer 1) ================= */
+function computeBrier(pos){
+  if(!pos.resolution || pos.direction==="キャッシュ" || !pos.scenarios) return null;
+  const hit = pos.resolution.whichScenarioHit;
+  let bs = 0;
+  SCENARIOS.forEach(s=>{
+    const p = pos.scenarios[s].prob;
+    const o = (hit===s)? 1 : 0;
+    bs += (p-o)*(p-o);
+  });
+  return bs;
+}
+function isLuckyWin(pos){
+  const r = pos.resolution;
+  return r && (r.judgment==="◎"||r.judgment==="○") && r.thesisValidated!=="正しい";
+}
+function resolvedPositions(filter){
+  filter = filter||{};
+  return state.positions
+    .filter(p=>p.resolution && p.direction!=="キャッシュ" && !p.resolution.isCash)
+    .filter(p=>!filter.horizon || p.horizon===filter.horizon)
+    .filter(p=>!filter.market || p.market===filter.market)
+    .filter(p=>!filter.regime || regimeKeyOf(p)===filter.regime)
+    .sort((a,b)=> (a.resolution.resolvedAt||"").localeCompare(b.resolution.resolvedAt||""));
+}
+function rollingBrierSeries(list, win){
+  win = win||ROLLING_WINDOW;
+  const pts=[];
+  const bss = list.map(computeBrier).filter(v=>v!=null);
+  for(let i=0;i<bss.length;i++){
+    const s = bss.slice(Math.max(0,i-win+1), i+1);
+    pts.push({i:i+1, raw:bss[i], roll: mean(s)});
+  }
+  return pts;
+}
+function gateStatus(list){
+  const n = list.length, m = new Set(list.map(regimeKeyOf)).size;
+  return {n, m, pass: n>=GATE_MIN_RESOLVED && m>=GATE_MIN_REGIMES,
+    label: "解決済み "+n+"/"+GATE_MIN_RESOLVED+"件・レジーム "+m+"/"+GATE_MIN_REGIMES};
+}
+function discriminationStats(){
+  const resolved = resolvedPositions();
+  const gate = gateStatus(resolved);
+  const winners = resolved.filter(p=>{
+    const r=p.resolution;
+    return (r.judgment==="◎"||r.judgment==="○") && r.thesisValidated==="正しい";
+  });
+  const luckyWins = resolved.filter(isLuckyWin);
+  const losers = resolved.filter(p=>["△","✗"].includes(p.resolution.judgment));
+  const rows = CRITERIA.map(c=>{
+    const w = winners.map(p=>p.scores?.[c.key]).filter(v=>typeof v==="number");
+    const l = losers.map(p=>p.scores?.[c.key]).filter(v=>typeof v==="number");
+    const all = resolved.map(p=>p.scores?.[c.key]).filter(v=>typeof v==="number");
+    const wm = mean(w), lm = mean(l);
+    const disc = (isNaN(wm)||isNaN(lm))? NaN : wm-lm;
+    const vr = variance(all);
+    let verdict = null;
+    if(gate.pass){
+      if(!isNaN(vr) && vr<VAR_DEAD_BAND) verdict = {type:"novar", text:"分散≈0：情報なし（削る候補・提案）"};
+      else if(!isNaN(disc) && Math.abs(disc)<DISC_NOISE_BAND) verdict = {type:"nodisc", text:"効いていない（削る候補・提案）"};
+      else if(!isNaN(disc)) verdict = {type:"works", text:"区別している（disc="+disc.toFixed(2)+"）"};
+      else verdict = {type:"na", text:"勝者/敗者サンプル不足"};
+    }
+    return {key:c.key, label:c.label, winMean:wm, loseMean:lm, disc, varAll:vr, verdict,
+      retired: !!state.retiredCriteria[c.key]};
+  });
+  return {gate, winners, losers, luckyWins, rows, resolved};
+}
+function disciplineStats(){
+  const resolved = state.positions.filter(p=>p.resolution && !p.resolution.isCash);
+  const slCases = resolved.filter(p=>p.resolution.stopLossDiscipline && p.resolution.stopLossDiscipline!=="該当なし");
+  const slExec = slCases.filter(p=>p.resolution.stopLossDiscipline==="執行").length;
+  const nonCash = state.positions.filter(p=>p.direction!=="キャッシュ" && p.exclusionCheck);
+  const exclViolations = nonCash.filter(p=>EXCLUSIONS.some(x=>p.exclusionCheck[x.key]===true));
+  return {
+    slTotal: slCases.length, slExec,
+    slRate: slCases.length? slExec/slCases.length : NaN,
+    exclTotal: nonCash.length, exclViol: exclViolations.length,
+    exclRate: nonCash.length? (nonCash.length-exclViolations.length)/nonCash.length : NaN
+  };
+}
+function returnPct(pos){
+  if(!pos.resolution || !pos.entry || !pos.resolution.resultPrice) return null;
+  const raw = (pos.resolution.resultPrice.value/pos.entry.value - 1)*100;
+  return pos.direction==="ショート"? -raw : raw;
+}
+/* ================= canvasグラフ ================= */
+function drawBrierChart(canvas, pts){
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.clientWidth||800, H = 260;
+  canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.height = H+"px";
+  const ctx = canvas.getContext && canvas.getContext("2d");
+  if(!ctx) return;
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  const padL=44, padR=12, padT=14, padB=26;
+  const yMax = 2.0, yMin = 0;
+  const x = i => padL + (W-padL-padR) * (pts.length<=1? 0.5 : (i)/(pts.length-1));
+  const y = v => padT + (H-padT-padB) * (1 - (v-yMin)/(yMax-yMin));
+  ctx.font = "10px monospace"; ctx.fillStyle="#6e7681"; ctx.strokeStyle="#21262d"; ctx.lineWidth=1;
+  [0,0.5,1.0,1.5,2.0].forEach(v=>{
+    ctx.beginPath(); ctx.moveTo(padL,y(v)); ctx.lineTo(W-padR,y(v)); ctx.stroke();
+    ctx.fillText(v.toFixed(1), 8, y(v)+3);
+  });
+  ctx.strokeStyle="#f85149"; ctx.setLineDash([5,4]); ctx.beginPath();
+  ctx.moveTo(padL,y(NAIVE_BRIER)); ctx.lineTo(W-padR,y(NAIVE_BRIER)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle="#f85149"; ctx.fillText("0.667 無知ライン", W-padR-110, y(NAIVE_BRIER)-5);
+  if(!pts.length){
+    ctx.fillStyle="#6e7681"; ctx.font="12px sans-serif";
+    ctx.fillText("解決済みポジションがまだありません", padL+20, H/2);
+    return;
+  }
+  ctx.fillStyle="#8b949e";
+  pts.forEach((p,i)=>{ ctx.beginPath(); ctx.arc(x(i),y(p.raw),2.2,0,7); ctx.fill(); });
+  ctx.strokeStyle="#3fb950"; ctx.lineWidth=2; ctx.beginPath();
+  pts.forEach((p,i)=>{ i? ctx.lineTo(x(i),y(p.roll)) : ctx.moveTo(x(i),y(p.roll)); });
+  ctx.stroke();
+  const last = pts[pts.length-1];
+  ctx.fillStyle="#3fb950"; ctx.font="11px monospace";
+  ctx.fillText("ローリング("+ROLLING_WINDOW+") = "+last.roll.toFixed(3), padL+6, padT+10);
+  ctx.fillStyle="#6e7681"; ctx.font="10px monospace";
+  ctx.fillText("解決順 →", W-padR-60, H-8);
+}
+/* ================= タブ ================= */
+let currentTab = "dash";
+function switchTab(name){
+  currentTab = name;
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  document.querySelectorAll("main section").forEach(s=>s.classList.toggle("show", s.id==="tab-"+name));
+  render();
+}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+function render(){
+  renderBanner();
+  if(currentTab==="dash") renderDash();
+  if(currentTab==="rounds") renderRounds();
+  if(currentTab==="measure") renderMeasure();
+  if(currentTab==="settings") renderSettings();
+}
+function renderBanner(){
+  const el = $("#dataBanner");
+  let html = "";
+  if(dataProblems.length){
+    html += "<div class='msg warn'><b>データ整合性の警告（"+dataProblems.length+"件）</b>：自動更新データに問題があります。Coworkのチャットで指摘してください。<ul style='list-style:none'>"
+      + dataProblems.slice(0,8).map(p=>"<li>・"+esc(p)+"</li>").join("")
+      + (dataProblems.length>8? "<li>…他"+(dataProblems.length-8)+"件</li>":"") + "</ul></div>";
+  }
+  el.innerHTML = html;
+}
+function openPositions(){ return state.positions.filter(p=>!p.resolution); }
+function duePositions(){ const t=todayStr(); return openPositions().filter(p=>p.targetDate && p.targetDate<=t); }
+/* ================= ダッシュボード ================= */
+function renderDash(){
+  const el = $("#tab-dash");
+  const resolved = resolvedPositions();
+  const pts = rollingBrierSeries(resolved);
+  const lastRoll = pts.length? pts[pts.length-1].roll : null;
+  const gate = gateStatus(resolved);
+  const due = duePositions();
+  let html = "";
+  html += "<div class='mut' style='font-size:12px;margin-bottom:10px'>データ最終更新: "+(state.updatedAt? esc(state.updatedAt):"—")+"（月曜朝=予測 / 土曜朝=答え合わせ が自動反映）</div>";
+  html += '<div class="kpis">';
+  html += kpi("ローリングBrier("+ROLLING_WINDOW+")", lastRoll==null?"—":lastRoll.toFixed(3),
+    lastRoll==null? "解決データなし" : (lastRoll<NAIVE_BRIER? "0.667を下回り中（継続が条件）":"0.667以上＝無知ライン未満のエッジ"),
+    lastRoll==null? "" : (lastRoll<NAIVE_BRIER?"pos":"warn"));
+  html += kpi("解決済み", resolved.length+"件", "キャッシュ除く");
+  html += kpi("答え合わせ待ち", due.length+"件", due.length? "次の土曜朝に自動判定":"期限内");
+  html += kpi("判定ゲート", gate.pass? "通過":"データ不足", gate.label, gate.pass?"pos":"");
+  html += '</div>';
+  html += "<h2>現在のポジション（6枠）— カードをタップで論拠・目標を表示</h2><div class='grid6'>";
+  const t = todayStr();
+  ["week","month","quarter"].forEach(h=>["JP","US"].forEach(m=>{
+    const open = openPositions().filter(p=>p.horizon===h&&p.market===m).sort((a,b)=>String(b.roundId).localeCompare(String(a.roundId)))[0];
+    if(!open){ html += "<div class='card empty'><div class='slot'>"+HORIZONS[h]+"・"+MARKETS[m]+"</div><div>（次の月曜朝に自動反映）</div></div>"; return; }
+    const overdue = open.targetDate && open.targetDate<=t;
+    html += "<div class='card pos-card"+(overdue?" overdue":"")+"' data-pos='"+esc(open.id)+"'>";
+    html += "<div class='slot'>"+HORIZONS[h]+"・"+MARKETS[m]+" <span class='tag "+(open.direction==="ロング"?"g":open.direction==="ショート"?"r":"b")+"'>"+esc(open.direction)+"</span></div>";
+    html += "<div class='tick'>"+esc(open.ticker)+"<small>"+esc(open.name||"")+"</small></div>";
+    if(open.entry) html += "<div class='mut' style='font-size:12px'>基準 <span class='num'>"+fmtNum(open.entry.value)+"</span>（"+esc(open.entry.date)+(open.entry.isEstimate?"・<span class='warn'>推定</span>":"")+"）</div>";
+    html += "<div class='mut' style='font-size:12px'>判定日 "+esc(open.targetDate||"—")+(overdue? " <span class='tag r'>判定待ち</span>":"")+"</div>";
+    if(open.scenarios) html += "<div style='margin-top:4px'>"+SCENARIOS.map(s=>"<span class='scn'>"+SCN_LABEL[s]+" "+Math.round(open.scenarios[s].prob*100)+"% → "+fmtNum(open.scenarios[s].price)+"</span>").join("")+"</div>";
+    html += "</div>";
+  }));
+  html += "</div>";
+  // 直近の解決結果
+  const recent = [...resolved].reverse().slice(0,6);
+  if(recent.length){
+    html += "<h2>直近の答え合わせ</h2><div class='panel'><table><tr><th>枠</th><th>銘柄</th><th class='num'>騰落</th><th>シナリオ</th><th>判定</th><th>論拠</th><th class='num'>Brier</th></tr>";
+    recent.forEach(p=>{
+      const rp = returnPct(p), bs = computeBrier(p);
+      html += "<tr class='rowlink' data-pos='"+esc(p.id)+"'><td>"+posLabel(p)+"</td><td><b>"+esc(p.ticker)+"</b></td>";
+      html += "<td class='num "+(rp!=null?pctClass(rp):"")+"'>"+(rp!=null?fmtPct(rp):"—")+"</td>";
+      html += "<td>"+esc(p.resolution.whichScenarioHit==="想定外"?"想定外":SCN_LABEL[p.resolution.whichScenarioHit]||"—")+"</td>";
+      html += "<td>"+esc(p.resolution.judgment||"—")+(isLuckyWin(p)?" <span class='tag a'>ラッキー勝ち</span>":"")+"</td>";
+      html += "<td>"+esc(p.resolution.thesisValidated||"—")+"</td>";
+      html += "<td class='num'>"+(bs!=null?bs.toFixed(3):"—")+"</td></tr>";
+    });
+    html += "</table></div>";
+  }
+  html += "<div class='philosophy'>健全に運用できていれば、毎週の学びの大半が「ノイズ」判定になるのが正しい。毎回新しい勝ちパターンが出るのは過学習のサイン。</div>";
+  el.innerHTML = html;
+  bindDetailLinks(el);
+}
+function kpi(l,v,n,cls){ return "<div class='kpi'><div class='l'>"+l+"</div><div class='v "+(cls||"")+"'>"+v+"</div><div class='n'>"+(n||"")+"</div></div>"; }
+function bindDetailLinks(root){
+  root.querySelectorAll("[data-pos]").forEach(x=>x.addEventListener("click",()=>showDetail(x.dataset.pos)));
+}
+/* ================= 詳細モーダル ================= */
+function showDetail(id){
+  const p = state.positions.find(q=>q.id===id);
+  if(!p) return;
+  const r = roundOf(p);
+  let html = "<h2 style='margin-top:0'>"+esc(p.ticker)+" <span class='mut' style='font-size:13px'>"+esc(p.name||"")+"</span></h2>";
+  html += "<div>"+["<span class='tag b'>"+posLabel(p)+"</span>",
+    "<span class='tag "+(p.direction==="ロング"?"g":p.direction==="ショート"?"r":"b")+"'>"+esc(p.direction)+"</span>",
+    "<span class='tag'>ラウンド "+esc(p.roundId)+"</span>",
+    r&&r.regimeTag? "<span class='tag'>レジーム "+esc(r.regimeTag.vixBucket+"/"+r.regimeTag.trend)+" F&G"+r.regimeTag.fearGreed+"</span>":""].join("")+"</div>";
+  if(p.direction!=="キャッシュ"){
+    html += "<h3>予測</h3><dl class='detail-grid'>";
+    html += "<dt>基準値</dt><dd>"+ppText(p.entry)+"</dd>";
+    html += "<dt>判定日</dt><dd>"+esc(p.targetDate||"—")+"</dd>";
+    if(p.scenarios){
+      SCENARIOS.forEach(s=>{
+        const sc = p.scenarios[s];
+        const chg = p.entry? ((sc.price/p.entry.value-1)*100) : null;
+        html += "<dt>"+SCN_LABEL[s]+"シナリオ</dt><dd><span class='num'>"+Math.round(sc.prob*100)+"%</span> → 目標 <b>"+fmtNum(sc.price)+"</b>"+(chg!=null? " <span class='"+pctClass(chg)+"'>("+fmtPct(chg)+")</span>":"")+"</dd>";
+      });
+    }
+    html += "<dt>損切りライン</dt><dd>"+(p.stopLoss? fmtNum(p.stopLoss):"—")+"</dd>";
+    html += "</dl>";
+    html += "<h3>選定理由（論拠）</h3><div class='thesis-box'>"+esc(p.thesis||"—")+"</div>";
+    if(p.scores){
+      html += "<h3>6基準スコア</h3>";
+      CRITERIA.forEach(c=>{
+        const v = p.scores[c.key];
+        html += "<div class='scorebar'><span class='lbl'>"+c.label+"</span><div class='bar'><div style='width:"+(v*10)+"%'></div></div><span class='val'>"+v+"</span></div>";
+      });
+    }
+    if(p.exclusionCheck){
+      const hits = EXCLUSIONS.filter(x=>p.exclusionCheck[x.key]);
+      html += "<h3>除外チェック</h3><div>"+(hits.length? hits.map(x=>"<span class='tag r'>"+x.label+"=該当</span>").join("")+" <span class='warn' style='font-size:12px'>該当のまま選定（規律違反として記録）</span>" : "<span class='tag g'>4項目すべてクリア</span>")+"</div>";
+    }
+  } else {
+    html += "<h3>キャッシュ判断の理由</h3><div class='thesis-box'>"+esc(p.thesis||"—")+"</div>";
+    html += "<dl class='detail-grid'><dt>判定日</dt><dd>"+esc(p.targetDate||"—")+"</dd></dl>";
+  }
+  if(p.resolution && !p.resolution.isCash){
+    const rr = p.resolution, rp = returnPct(p), bs = computeBrier(p);
+    html += "<h3>答え合わせ結果</h3><dl class='detail-grid'>";
+    html += "<dt>結果価格</dt><dd>"+ppText(rr.resultPrice)+"</dd>";
+    html += "<dt>騰落</dt><dd class='"+(rp!=null?pctClass(rp):"")+"'>"+(rp!=null?fmtPct(rp):"—")+(p.direction==="ショート"?"（ショート実効）":"")+"</dd>";
+    html += "<dt>シナリオ判定</dt><dd>"+esc(rr.whichScenarioHit==="想定外"?"想定外":(SCN_LABEL[rr.whichScenarioHit]||"—"))+"　Brier "+(bs!=null?bs.toFixed(3):"—")+"</dd>";
+    html += "<dt>judgment</dt><dd>"+esc(rr.judgment||"—")+(isLuckyWin(p)?" <span class='tag a'>ラッキー勝ち（勝者統計から除外）</span>":"")+"</dd>";
+    html += "<dt>論拠検証</dt><dd>"+esc(rr.thesisValidated||"—")+"</dd>";
+    html += "<dt>損切り規律</dt><dd>"+esc(rr.stopLossDiscipline||"—")+"</dd>";
+    html += "<dt>学び</dt><dd>"+(rr.learning? "<span class='tag p'>"+esc(rr.learning.type)+"</span> "+esc(rr.learning.note||""):"—")+"</dd>";
+    if(rr.corporateAction && rr.corporateAction!=="なし") html += "<dt>権利落ち</dt><dd class='warn'>"+esc(rr.corporateAction)+"</dd>";
+    html += "</dl>";
+    if(rr.resultPrice && rr.resultPrice.isEstimate) html += "<div class='msg warn' style='font-size:12px'>結果価格は自動取得の推定値です。実際の終値と違う場合はCoworkチャットで「本当は◯◯円」と一言伝えれば訂正されます。</div>";
+  } else if(p.resolution && p.resolution.isCash){
+    html += "<h3>キャッシュ判断の振り返り</h3><div class='thesis-box'>"+esc(p.resolution.note||"—")+"</div>";
+  }
+  $("#modalBody").innerHTML = html;
+  $("#modalBack").classList.add("show");
+}
+$("#modalClose").addEventListener("click",()=>$("#modalBack").classList.remove("show"));
+$("#modalBack").addEventListener("click",e=>{ if(e.target.id==="modalBack") $("#modalBack").classList.remove("show"); });
+/* ================= ラウンド一覧 ================= */
+function renderRounds(){
+  const el = $("#tab-rounds");
+  let html = "<h2>ラウンド履歴（行をタップで詳細）</h2>";
+  if(!state.rounds.length){ el.innerHTML = html+"<div class='panel mut'>まだありません。初回の予測は次の月曜朝に自動反映されます。</div>"; return; }
+  const rounds = [...state.rounds].sort((a,b)=>String(b.roundId).localeCompare(String(a.roundId)));
+  rounds.forEach(r=>{
+    const ps = state.positions.filter(p=>p.roundId===r.roundId);
+    html += "<div class='panel'><b>"+esc(r.roundId)+"</b>　<span class='mut'>発表 "+esc(r.announcedAt)+"</span>　";
+    if(r.regimeTag) html += "<span class='tag'>VIX:"+esc(r.regimeTag.vixBucket)+"</span><span class='tag'>trend:"+esc(r.regimeTag.trend)+"</span><span class='tag'>F&G:"+r.regimeTag.fearGreed+"</span>";
+    if(r.note) html += "<div class='mut' style='font-size:12px;margin-top:4px'>"+esc(r.note)+"</div>";
+    html += "<table style='margin-top:8px'><tr><th>枠</th><th>方向</th><th>銘柄</th><th class='num'>基準値</th><th class='num'>結果</th><th class='num'>騰落</th><th class='num'>Brier</th><th>判定</th><th>論拠</th><th>学び</th></tr>";
+    ps.forEach(p=>{
+      const r2 = p.resolution;
+      const rp = returnPct(p);
+      const bs = computeBrier(p);
+      html += "<tr class='rowlink' data-pos='"+esc(p.id)+"'><td>"+posLabel(p)+"</td><td>"+esc(p.direction)+"</td><td><b>"+esc(p.ticker)+"</b></td>";
+      html += "<td class='num'>"+(p.entry?fmtNum(p.entry.value):"—")+"</td>";
+      html += "<td class='num'>"+(r2&&r2.resultPrice? fmtNum(r2.resultPrice.value)+(r2.resultPrice.isEstimate?"<span class='warn'>*</span>":""):"—")+"</td>";
+      html += "<td class='num "+(rp!=null?pctClass(rp):"")+"'>"+(rp!=null?fmtPct(rp):"—")+"</td>";
+      html += "<td class='num'>"+(bs!=null? bs.toFixed(3):"—")+"</td>";
+      html += "<td>"+(r2? esc(r2.judgment||(r2.isCash?"記録":"—"))+(isLuckyWin(p)?" <span class='tag a'>ラッキー</span>":""):"<span class='dim'>未解決</span>")+"</td>";
+      html += "<td>"+(r2? esc(r2.thesisValidated||"—"):"—")+"</td>";
+      html += "<td>"+(r2&&r2.learning? "<span class='tag "+(r2.learning.type==="ノイズ"?"":"p")+"'>"+esc(r2.learning.type)+"</span>":"—")+"</td></tr>";
+    });
+    html += "</table><div class='dim' style='font-size:11px;margin-top:4px'>* = 自動取得の推定値（訂正はチャットで一言）</div></div>";
+  });
+  el.innerHTML = html;
+  bindDetailLinks(el);
+}
+/* ================= 測定タブ ================= */
+let measureFilter = {horizon:"", market:"", regime:""};
+function renderMeasure(){
+  const el = $("#tab-measure");
+  const all = resolvedPositions();
+  const regimes = [...new Set(all.map(regimeKeyOf))];
+  let html = "<h2>キャリブレーション（Brier）</h2>";
+  html += "<div class='panel'><div class='formrow'>";
+  html += "<div class='field'><label>時間軸</label><select id='fH'><option value=''>全て</option>"+Object.keys(HORIZONS).map(h=>"<option value='"+h+"'"+(measureFilter.horizon===h?" selected":"")+">"+HORIZONS[h]+"</option>").join("")+"</select></div>";
+  html += "<div class='field'><label>市場</label><select id='fM'><option value=''>全て</option>"+Object.keys(MARKETS).map(m=>"<option value='"+m+"'"+(measureFilter.market===m?" selected":"")+">"+MARKETS[m]+"</option>").join("")+"</select></div>";
+  html += "<div class='field'><label>レジーム</label><select id='fR'><option value=''>全て</option>"+regimes.map(r=>"<option"+(measureFilter.regime===r?" selected":"")+">"+esc(r)+"</option>").join("")+"</select></div>";
+  html += "</div>";
+  const filtered = resolvedPositions({horizon:measureFilter.horizon||null, market:measureFilter.market||null, regime:measureFilter.regime||null});
+  const pts = rollingBrierSeries(filtered);
+  html += "<canvas id='brierChart'></canvas>";
+  const meanBs = mean(filtered.map(computeBrier).filter(v=>v!=null));
+  html += "<div class='mut' style='font-size:12px;margin-top:6px'>対象 "+filtered.length+"件　平均Brier "+(isNaN(meanBs)?"—":meanBs.toFixed(3))+"　｜　0.667＝一様(1/3,1/3,1/3)の無知ライン。ローリングが継続的に下回って初めてエッジと言える。単発の低さはノイズ。</div>";
+  html += "</div>";
+  const ds = discriminationStats();
+  html += "<h2>基準別の効き測定（discrimination）</h2>";
+  if(!ds.gate.pass){
+    html += "<div class='msg info'><b>データ不足：判定は出せません</b>（"+ds.gate.label+"）<br>最低サンプル門: 解決済み"+GATE_MIN_RESOLVED+"件以上 かつ 2レジーム以上。それまでは参考値のみ表示し、削除提案は行いません。";
+    html += "<div class='gatebar'><div style='width:"+Math.min(100, Math.round(ds.gate.n/GATE_MIN_RESOLVED*100))+"%'></div></div></div>";
+  }
+  html += "<div class='panel'>";
+  html += "<div class='mut' style='font-size:12px;margin-bottom:6px'>勝者＝◎/○かつ論拠「正しい」（"+ds.winners.length+"件）　敗者＝△/✗（"+ds.losers.length+"件）　ラッキー勝ち除外（"+ds.luckyWins.length+"件）</div>";
+  html += "<table><tr><th>基準</th><th class='num'>勝者平均</th><th class='num'>敗者平均</th><th class='num'>差(disc)</th><th class='num'>全体分散</th><th>判定</th><th>操作</th></tr>";
+  ds.rows.forEach(r=>{
+    html += "<tr"+(r.retired?" style='opacity:.45'":"")+"><td>"+r.label+(r.retired?" <span class='tag r'>削除済み</span>":"")+"</td>";
+    html += "<td class='num'>"+(isNaN(r.winMean)?"—":r.winMean.toFixed(2))+"</td>";
+    html += "<td class='num'>"+(isNaN(r.loseMean)?"—":r.loseMean.toFixed(2))+"</td>";
+    html += "<td class='num "+(isNaN(r.disc)?"":(Math.abs(r.disc)<DISC_NOISE_BAND?"warn":"pos"))+"'>"+(isNaN(r.disc)?"—":(r.disc>=0?"+":"")+r.disc.toFixed(2))+"</td>";
+    html += "<td class='num'>"+(isNaN(r.varAll)?"—":r.varAll.toFixed(2))+"</td>";
+    if(!ds.gate.pass) html += "<td class='dim'>—（データ不足）</td><td></td>";
+    else{
+      html += "<td class='"+(r.verdict.type==="works"?"pos":"warn")+"'>"+esc(r.verdict.text)+"</td>";
+      if(r.retired) html += "<td><button class='btn small' data-revive='"+r.key+"'>復帰</button></td>";
+      else if(r.verdict.type==="nodisc"||r.verdict.type==="novar") html += "<td><button class='btn small danger' data-retire='"+r.key+"'>削除を確定（人間の操作）</button></td>";
+      else html += "<td></td>";
+    }
+    html += "</tr>";
+  });
+  html += "</table>";
+  html += "<div class='philosophy'>「効いていない」は提案のみ。実際の削除はここでの人間の確定操作でのみ行われる（自動削除禁止）。削除を確定したら、Coworkチャットにも「基準◯◯を削除確定した」と一言伝えてください（自動予測タスクに反映されます）。</div>";
+  html += "</div>";
+  const disc = disciplineStats();
+  html += "<h2>規律スコア（予測精度とは分離して測定）</h2><div class='kpis'>";
+  html += kpi("損切り執行率", isNaN(disc.slRate)?"—":Math.round(disc.slRate*100)+"%", "該当"+disc.slTotal+"件中 執行"+disc.slExec+"件", isNaN(disc.slRate)?"":(disc.slRate>=0.99?"pos":"warn"));
+  html += kpi("除外ルール遵守率", isNaN(disc.exclRate)?"—":Math.round(disc.exclRate*100)+"%", "全"+disc.exclTotal+"件中 違反"+disc.exclViol+"件", isNaN(disc.exclRate)?"":(disc.exclRate>=0.99?"pos":"warn"));
+  html += "</div>";
+  const learns = state.positions.filter(p=>p.resolution&&p.resolution.learning).map(p=>p.resolution.learning.type);
+  if(learns.length){
+    const cnt = {}; LEARNING_TYPES.forEach(t=>cnt[t]=0); learns.forEach(t=>{ if(cnt[t]!=null)cnt[t]++; });
+    const noiseRatio = cnt["ノイズ"]/learns.length;
+    html += "<h2>学びタイプ分布（過学習の体温計）</h2><div class='panel'>";
+    html += LEARNING_TYPES.map(t=>"<span class='tag "+(t==="ノイズ"?"g":"")+"' style='margin-right:8px'>"+t+" "+cnt[t]+"件</span>").join("");
+    html += "<div class='mut' style='font-size:12px;margin-top:8px'>ノイズ比率 "+Math.round(noiseRatio*100)+"%　"+(noiseRatio<0.5&&learns.length>=10?"<span class='warn'>⚠ 毎回パターンを発見している状態は過学習のサイン</span>":"健全に運用できていれば大半がノイズ判定になる")+"</div></div>";
+  }
+  el.innerHTML = html;
+  ["fH","fM","fR"].forEach((id,i)=>{
+    $("#"+id).addEventListener("change", e=>{
+      measureFilter[["horizon","market","regime"][i]] = e.target.value;
+      renderMeasure();
+    });
+  });
+  drawBrierChart($("#brierChart"), pts);
+  el.querySelectorAll("[data-retire]").forEach(b=>b.addEventListener("click",()=>{
+    const key = b.dataset.retire;
+    const label = CRITERIA.find(c=>c.key===key).label;
+    if(!confirm("基準「"+label+"」を削除確定しますか？（過去データは残ります。今後の予測生成でこの基準を使わない合意になります。復帰可能）")) return;
+    state.retiredCriteria[key] = {retiredAt:new Date().toISOString()};
+    saveOverrides(); renderMeasure();
+  }));
+  el.querySelectorAll("[data-revive]").forEach(b=>b.addEventListener("click",()=>{
+    delete state.retiredCriteria[b.dataset.revive];
+    saveOverrides(); renderMeasure();
+  }));
+}
+/* ================= 設定 ================= */
+function renderSettings(){
+  const el = $("#tab-settings");
+  let html = "<h2>このアプリの仕組み</h2><div class='panel' style='font-size:13px'>";
+  html += "<p>予測の生成・答え合わせ・データ更新はすべてCoworkのスケジュールタスクが自動で行います。松村さんの手入力は不要です。</p>";
+  html += "<ul style='list-style:none;margin-top:8px;color:var(--muted);font-size:12px'>";
+  html += "<li>・毎週月曜 7:30 JST — 週次予測（日米）を生成、月次・季次も期限到来分を更新 → このアプリに反映</li>";
+  html += "<li>・毎週土曜 8:00 JST — 期限到来ポジションの答え合わせを自動実行 → 反映</li>";
+  html += "<li>・自動取得した株価には <span class='warn'>推定</span> マークが付きます。数字が違うと気づいたら、Coworkチャットで「◯◯の終値は本当は◯◯円」と一言伝えれば訂正されます（ユーザー提示が常に最優先）。</li>";
+  html += "<li>・反映を確認するには、このページを再読み込みしてください。</li>";
+  html += "</ul></div>";
+  html += "<h2>バックアップ</h2><div class='panel'>";
+  html += "<button class='btn primary' id='btnExport'>現在のデータをJSONダウンロード</button>";
+  html += "<span class='mut' style='font-size:12px;margin-left:10px'>データ本体はアプリと同じフォルダの data.js です（自動でバージョン管理されます）。</span></div>";
+  html += "<h2>データ概要</h2><div class='panel mut' style='font-size:13px'>ラウンド "+state.rounds.length+"件　／　ポジション "+state.positions.length+"件（解決済み "+state.positions.filter(p=>p.resolution).length+"件）　／　schemaVersion "+state.schemaVersion+"　／　最終更新 "+(state.updatedAt||"—")+"</div>";
+  el.innerHTML = html;
+  $("#btnExport").addEventListener("click",()=>{
+    const blob = new Blob([JSON.stringify({schemaVersion:state.schemaVersion, updatedAt:state.updatedAt, rounds:state.rounds, positions:state.positions},null,2)],{type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "ultimate-game-backup-"+todayStr()+".json";
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+}
+/* ================= 初期化 ================= */
+$("#verLabel").textContent = "schema v"+SCHEMA_VERSION+"（全自動モード）";
+render();
+</script>
+</body>
+</html>

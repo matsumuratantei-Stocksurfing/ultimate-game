@@ -89,6 +89,16 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
 .scorebar .bar{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
 .scorebar .bar div{height:100%;background:var(--blue)}
 .scorebar .val{width:24px;text-align:right;font-family:var(--mono)}
+/* 学習機能 (v2.1.0) */
+.learn-card{border-left:3px solid var(--purple)}
+.learn-card.subdued{opacity:.7}
+.learn-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.learn-chip{border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;user-select:none}
+.learn-chip.unread{color:var(--dim);border-style:dashed}
+.learn-chip.read{color:var(--text)}
+.learn-chip.read:hover{border-color:var(--muted)}
+.learn-chip.done{border-color:var(--green);color:var(--green)}
+#toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f6feb;color:#fff;padding:10px 18px;border-radius:8px;z-index:30;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -110,10 +120,17 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
   <section id="tab-settings"></section>
 </main>
 <div id="modalBack"><div id="modal"><button id="modalClose">✕</button><div id="modalBody"></div></div></div>
+<div id="toast"></div>
 <footer>究極ゲーム 記録・測定システム — 単一HTML / data.js自動更新 / 外部依存なし</footer>
 <script src="data.js"></script>
 <script>
 "use strict";
+/* ===== 変更履歴（松村式バージョン管理） =====
+ v2.1.0 (2026-07-03): 投資イロハ学習機能を追加（CURRICULUM_V1 30項目・今回の学びカード・習得トラッカー/習得マップ・Claude深掘り質問コピー）。既存のBrier計算・測定ロジックは無変更。
+ v2.0.0 (2026-07-03): 全自動モード（data.js駆動・手入力ゼロ）に刷新。GitHub Pages対応。
+ v1.0.0 (2026-07-03): 初版（予測JSON手動取り込み版）。
+*/
+const APP_VERSION = "2.1.0";
 /* ================= 定数 ================= */
 const SCHEMA_VERSION = 1;
 const OVERRIDE_KEY = "ultimateGame_overrides_v1";
@@ -142,6 +159,50 @@ const GATE_MIN_REGIMES  = 2;
 const ROLLING_WINDOW = 10;
 const DISC_NOISE_BAND = 0.5;
 const VAR_DEAD_BAND  = 0.35;
+/* ================= 投資イロハ カリキュラム（v2.1.0追加） =================
+   将来の項目追加は CURRICULUM_V1 配列への追記のみで機能する。文言は固定（松村式スタイル辞書とは別管理）。 */
+const CURRICULUM_V1 = [
+  // ===== A層: 共通原理（リスク管理・投資心理）=====
+  { id: "A01", layer: "common", term: "損小利大", principle: "成績を決めるのは勝率ではなくR倍数（平均利益÷平均損失）。勝率40%でもR=3なら大きく勝てる。" },
+  { id: "A02", layer: "common", term: "トレーリングストップ", principle: "天井で売ることは誰にもできない。上昇に合わせて損切りラインを切り上げ、「降り方」で利益を確定する。" },
+  { id: "A03", layer: "common", term: "ポジションサイジング", principle: "1回のトレードで失ってよいのは資金の1〜2%まで。複利は生き残った者にしか働かない。" },
+  { id: "A04", layer: "common", term: "FOMO（機会損失恐怖）", principle: "「乗り遅れる恐怖」は最も高い場所で買わせる心理装置。急騰後の飛び乗りは統計的に不利。" },
+  { id: "A05", layer: "common", term: "プロスペクト理論", principle: "人間は利益を早く確定し、損失を放置する本能を持つ。損切りルールはこの本能への対抗策として存在する。" },
+  { id: "A06", layer: "common", term: "期待値思考", principle: "1回の当たり外れで手法を評価しない。同じ判断を100回繰り返した時の損益分布で考える。理由が間違った的中（ラッキーウィン）は実力ではない。" },
+  // ===== B層: 週次＝需給・テクニカル =====
+  { id: "B01", layer: "weekly", term: "出来高は嘘をつかない", principle: "価格は需給で操作できても出来高の急増は本物の資金流入。出来高を伴わない上昇は信頼度が低い。" },
+  { id: "B02", layer: "weekly", term: "支持線・抵抗線", principle: "過去に売買が集中した価格帯は「買った人の後悔」「売った人の後悔」が集まる節目となり、再び攻防が起きる。" },
+  { id: "B03", layer: "weekly", term: "移動平均線と押し目", principle: "上昇トレンド中の一時的下落（押し目）は優位なエントリー点。ただしトレンド自体が壊れた下落との区別が核心。" },
+  { id: "B04", layer: "weekly", term: "VCP（ボラティリティ収縮）", principle: "値幅と出来高が段階的に細るのは、売り手が枯れて大きな動きが近い前兆（ミネルヴィニ）。" },
+  { id: "B05", layer: "weekly", term: "ブレイクアウトとダマシ", principle: "抵抗線を抜けた事実より「出来高を伴って抜けたか」が本物の判定基準。薄商いのブレイクは戻されやすい。" },
+  { id: "B06", layer: "weekly", term: "好材料出尽くし", principle: "良いニュースで株価が下がるのは、期待が事前に価格へ織り込まれ、発表が利益確定の合図になったから。" },
+  { id: "B07", layer: "weekly", term: "踏み上げ", principle: "空売りの買い戻しは上昇をさらに加速させる。空売り比率が高い銘柄の急騰は需給の歪みが原動力。" },
+  { id: "B08", layer: "weekly", term: "地合い", principle: "個別株は市場全体に逆らえない。指数が崩れる日はどんな好業績銘柄も売られる。まず市場、次に銘柄。" },
+  { id: "B09", layer: "weekly", term: "窓（ギャップ）", principle: "寄付の急変が作る価格の空白。材料の強さ次第で「埋める窓」と「埋めない窓」に分かれ、埋めない窓は強いトレンドの証拠。" },
+  { id: "B10", layer: "weekly", term: "信用残", principle: "高水準の信用買い残は「いずれ売らなければならない人の在庫」＝将来の売り圧力であり、上値を重くする。" },
+  // ===== C層: 月次＝決算・セクター =====
+  { id: "C01", layer: "monthly", term: "決算は実績よりガイダンス", principle: "株価を動かすのは過去の数字ではなく将来見通しの修正。好実績でもガイダンス弱気なら売られる。" },
+  { id: "C02", layer: "monthly", term: "決算またぎ", principle: "決算持ち越しは運試しではなく期待値計算。想定上振れ幅と下振れ幅を比べ、リスクリワードが不利なら降りる。" },
+  { id: "C03", layer: "monthly", term: "セクターローテーション", principle: "資金は市場から消えるのではなく業種間を循環する。下がったセクターの資金がどこへ向かったかを追う。" },
+  { id: "C04", layer: "monthly", term: "テーマ物色の寿命", principle: "テーマ相場は初動（本命が動く）→過熱（出遅れ・関連が動く）→崩壊の3段階。今どの段階かで戦略が変わる。" },
+  { id: "C05", layer: "monthly", term: "業績改善初期", principle: "株価を最も動かすのは利益の絶対額ではなく変化率。赤字縮小・黒字転換の「初期」が最大の値幅を生む（CANSLIM）。" },
+  { id: "C06", layer: "monthly", term: "機関投資家の足跡", principle: "大口は一度に買えないため数週間かけて買い集める。出来高増加が続きながら株価が下がらないのはそのサイン。" },
+  { id: "C07", layer: "monthly", term: "株主還元イベント", principle: "増配・自社株買いは需給改善と「経営陣が割安と考えている」メッセージの両面で株価に効く。" },
+  { id: "C08", layer: "monthly", term: "浮動株と値動きの軽さ", principle: "小型株が急騰しやすいのは市場で動かせる株数が少ないから。同じ資金でも浮動株が少ないほど値幅が出る。諸刃の剣。" },
+  // ===== D層: 四半期＝マクロ・国策 =====
+  { id: "D01", layer: "quarterly", term: "金利とグロース株", principle: "金利上昇は将来利益の割引率を上げ、成長株の評価を圧縮する。グロース株にとって金利は重力。" },
+  { id: "D02", layer: "quarterly", term: "為替と業種", principle: "円安は輸出・インバウンド・海外資産保有企業に追い風、円高は輸入・内需に追い風。業種ごとの感応度を知る。" },
+  { id: "D03", layer: "quarterly", term: "国策に売りなし", principle: "政策テーマ（骨太方針・予算・法改正）は予算という実弾を伴うため資金流入が長期化しやすい。" },
+  { id: "D04", layer: "quarterly", term: "景気サイクルとセクター", principle: "景気回復初期はハイテク・素材・金融、後期はディフェンシブ（食品・医薬・電力）が相対的に強い。" },
+  { id: "D05", layer: "quarterly", term: "需給カレンダー", principle: "SQ、指数リバランス、年末の税金対策売り、月末のドレッシング買いなど、業績と無関係に株価が動く定例イベントがある。" },
+  { id: "D06", layer: "quarterly", term: "リスクオフの伝播", principle: "VIX急騰時は全資産の相関が1に近づき分散が効かなくなる。危機時は「何を持つか」より「どれだけ持つか」。" }
+];
+const CURRICULUM_LAYER_LABEL = {common:"A層: 共通原理", weekly:"B層: 週次・需給/テクニカル", monthly:"C層: 月次・決算/セクター", quarterly:"D層: 季次・マクロ/国策"};
+const HORIZON_TO_LAYER = {week:"weekly", month:"monthly", quarter:"quarterly"};
+const CURRICULUM_PROGRESS_KEY = "curriculumProgress";   // {id:{count,firstShown,understood}}
+const CURRICULUM_ASSIGN_KEY = "curriculumAssignments";  // {positionId: curriculumId} 答え合わせ1件につき1項目を固定
+const WEAK_LAYER_BRIER = 0.75;  // 直近10件で層平均Brierがこれ以上（=0.667を明確に下回る成績）なら弱点層として優先
+const WEAK_LAYER_MIN_N = 3;
 /* ================= データ読み込み（data.js 駆動） ================= */
 let state = {schemaVersion:SCHEMA_VERSION, rounds:[], positions:[], retiredCriteria:{}, updatedAt:null};
 let dataProblems = [];
@@ -278,6 +339,138 @@ function returnPct(pos){
   const raw = (pos.resolution.resultPrice.value/pos.entry.value - 1)*100;
   return pos.direction==="ショート"? -raw : raw;
 }
+/* ================= 投資イロハ学習機能 (v2.1.0) =================
+   外部API不使用・ルールベース。既存の測定ロジックには一切影響しない。 */
+function loadJsonKey(key){ try{ return JSON.parse(localStorage.getItem(key)||"{}"); }catch(e){ return {}; } }
+function saveJsonKey(key,obj){ localStorage.setItem(key, JSON.stringify(obj)); }
+function curriculumById(id){ return CURRICULUM_V1.find(c=>c.id===id)||null; }
+function curriculumShownCount(prog,id){ return (prog[id]&&prog[id].count)||0; }
+function isMissJudgment(pos){ return !!pos.resolution && ["△","✗"].includes(pos.resolution.judgment); }
+// 弱点連動: 直近10件の解決から層別平均Brierを集計し、明確に悪い層を返す（該当なしはnull）
+function weakestCurriculumLayer(){
+  const recent = resolvedPositions().slice(-10);
+  const by = {};
+  recent.forEach(p=>{
+    const l = HORIZON_TO_LAYER[p.horizon];
+    const bs = computeBrier(p);
+    if(bs==null || !l) return;
+    (by[l]=by[l]||[]).push(bs);
+  });
+  let worst=null, worstMean=-1;
+  Object.keys(by).forEach(l=>{
+    if(by[l].length>=WEAK_LAYER_MIN_N){
+      const m = mean(by[l]);
+      if(m>=WEAK_LAYER_BRIER && m>worstMean){ worst=l; worstMean=m; }
+    }
+  });
+  return worst;
+}
+// 選択ロジック（優先順位: ①ラッキーウィン→A06固定 ②弱点層上書き ③外れ→層対応 ④的中→全体から。②③④は表示回数最少→同数ランダム）
+function selectCurriculumId(pos){
+  if(isLuckyWin(pos)) return "A06";
+  const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+  let pool;
+  const weak = weakestCurriculumLayer();
+  if(weak) pool = CURRICULUM_V1.filter(c=>c.layer===weak);
+  else if(isMissJudgment(pos)) pool = CURRICULUM_V1.filter(c=>c.layer===HORIZON_TO_LAYER[pos.horizon]);
+  else pool = CURRICULUM_V1.slice();
+  if(!pool.length) pool = CURRICULUM_V1.slice();
+  const minCount = Math.min(...pool.map(c=>curriculumShownCount(prog,c.id)));
+  const cand = pool.filter(c=>curriculumShownCount(prog,c.id)===minCount);
+  return cand[Math.floor(Math.random()*cand.length)].id;
+}
+// 答え合わせ1件につき1項目を固定割当（再表示で再抽選しない）。初回割当時に表示回数を記録。
+function assignCurriculum(pos){
+  if(!pos || !pos.resolution || pos.resolution.isCash || pos.direction==="キャッシュ") return null;
+  const asg = loadJsonKey(CURRICULUM_ASSIGN_KEY);
+  if(asg[pos.id]) return curriculumById(asg[pos.id]);
+  const id = selectCurriculumId(pos);
+  if(!id) return null;
+  asg[pos.id] = id;
+  saveJsonKey(CURRICULUM_ASSIGN_KEY, asg);
+  const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+  const rec = prog[id]||{count:0, firstShown:null, understood:false};
+  rec.count++;
+  if(!rec.firstShown) rec.firstShown = new Date().toISOString();
+  prog[id] = rec;
+  saveJsonKey(CURRICULUM_PROGRESS_KEY, prog);
+  return curriculumById(id);
+}
+function curriculumReadCount(){
+  const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+  return CURRICULUM_V1.filter(c=>curriculumShownCount(prog,c.id)>0).length;
+}
+function curriculumCardHtml(pos){
+  const item = assignCurriculum(pos);
+  if(!item) return "";
+  const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+  const lucky = isLuckyWin(pos);
+  const subdued = !lucky && !isMissJudgment(pos); // 的中時は控えめトーン
+  const understood = prog[item.id] && prog[item.id].understood;
+  let html = "<div class='panel learn-card"+(subdued?" subdued":"")+"'>";
+  html += "<div style='font-size:14px'><b>📖 今回の学び: "+esc(item.term)+"</b> <span class='tag'>"+esc(CURRICULUM_LAYER_LABEL[item.layer])+"</span></div>";
+  if(lucky) html += "<div class='warn' style='font-size:12px;margin-top:4px'>今回は的中しましたが、ラッキーウィン判定です。</div>";
+  html += "<div style='margin-top:6px;font-size:13px'>"+esc(item.principle)+"</div>";
+  html += "<div style='margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'>";
+  html += "<span class='mut' style='font-size:12px'>習得マップ: "+curriculumReadCount()+"/"+CURRICULUM_V1.length+"</span>";
+  html += "<button class='btn small' data-understood='"+esc(item.id)+"'>"+(understood?"✅ 理解済み":"理解した")+"</button>";
+  html += "<button class='btn small' data-deepdive='"+esc(pos.id)+"'>Claudeに深掘り質問</button>";
+  html += "</div></div>";
+  return html;
+}
+function deepDiveText(pos){
+  const asg = loadJsonKey(CURRICULUM_ASSIGN_KEY);
+  const item = curriculumById(asg[pos.id]);
+  if(!item) return "";
+  const rp = returnPct(pos);
+  const bs = computeBrier(pos);
+  const r = pos.resolution;
+  const hitLabel = r.whichScenarioHit==="想定外" ? "想定外" : (SCN_LABEL[r.whichScenarioHit]||"—");
+  return "【究極ゲームからの深掘り質問】\n"
+    + "学習項目: "+item.term+"\n"
+    + "原理: "+item.principle+"\n\n"
+    + "今回の予測: "+HORIZONS[pos.horizon]+"次 / "+(pos.name||pos.ticker)+" / 予測"+pos.direction
+    + " → 結果"+(rp!=null?fmtPct(rp):"—")+"・シナリオ"+hitLabel
+    + "（Brier判定: "+(bs!=null?bs.toFixed(3):"—")+" / "+(r.judgment||"—")+"）\n\n"
+    + "この原理について、今回の予測結果と結びつけて詳しく解説してください。\n"
+    + "特に「なぜこの結果になったのか」の要因分解と、次回の予測で確認すべきチェックポイントを教えてください。";
+}
+async function copyToClipboard(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy"); document.body.removeChild(ta);
+      return ok;
+    }catch(e2){ return false; }
+  }
+}
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById("toast");
+  if(!t) return;
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.style.display="none"; }, 3500);
+}
+function bindCurriculumButtons(root){
+  root.querySelectorAll("[data-understood]").forEach(b=>b.addEventListener("click",()=>{
+    const id = b.dataset.understood;
+    const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+    const rec = prog[id]||{count:1, firstShown:new Date().toISOString(), understood:false};
+    rec.understood = !rec.understood;
+    prog[id] = rec;
+    saveJsonKey(CURRICULUM_PROGRESS_KEY, prog);
+    b.textContent = rec.understood ? "✅ 理解済み" : "理解した";
+  }));
+  root.querySelectorAll("[data-deepdive]").forEach(b=>b.addEventListener("click", async ()=>{
+    const pos = state.positions.find(q=>q.id===b.dataset.deepdive);
+    if(!pos) return;
+    const ok = await copyToClipboard(deepDiveText(pos));
+    showToast(ok ? "コピーしました。Claudeのチャットに貼り付けてください" : "コピーに失敗しました。手動で選択してください");
+  }));
+}
 /* ================= canvasグラフ ================= */
 function drawBrierChart(canvas, pts){
   const dpr = window.devicePixelRatio||1;
@@ -390,10 +583,12 @@ function renderDash(){
       html += "<td class='num'>"+(bs!=null?bs.toFixed(3):"—")+"</td></tr>";
     });
     html += "</table></div>";
+    html += curriculumCardHtml(recent[0]); // 最新の答え合わせ1件につき学びカード1枚（視覚的主役はBrier、カードは脇役）
   }
   html += "<div class='philosophy'>健全に運用できていれば、毎週の学びの大半が「ノイズ」判定になるのが正しい。毎回新しい勝ちパターンが出るのは過学習のサイン。</div>";
   el.innerHTML = html;
   bindDetailLinks(el);
+  bindCurriculumButtons(el);
 }
 function kpi(l,v,n,cls){ return "<div class='kpi'><div class='l'>"+l+"</div><div class='v "+(cls||"")+"'>"+v+"</div><div class='n'>"+(n||"")+"</div></div>"; }
 function bindDetailLinks(root){
@@ -451,11 +646,13 @@ function showDetail(id){
     if(rr.corporateAction && rr.corporateAction!=="なし") html += "<dt>権利落ち</dt><dd class='warn'>"+esc(rr.corporateAction)+"</dd>";
     html += "</dl>";
     if(rr.resultPrice && rr.resultPrice.isEstimate) html += "<div class='msg warn' style='font-size:12px'>結果価格は自動取得の推定値です。実際の終値と違う場合はCoworkチャットで「本当は◯◯円」と一言伝えれば訂正されます。</div>";
+    html += curriculumCardHtml(p);
   } else if(p.resolution && p.resolution.isCash){
     html += "<h3>キャッシュ判断の振り返り</h3><div class='thesis-box'>"+esc(p.resolution.note||"—")+"</div>";
   }
   $("#modalBody").innerHTML = html;
   $("#modalBack").classList.add("show");
+  bindCurriculumButtons($("#modalBody"));
 }
 $("#modalClose").addEventListener("click",()=>$("#modalBack").classList.remove("show"));
 $("#modalBack").addEventListener("click",e=>{ if(e.target.id==="modalBack") $("#modalBack").classList.remove("show"); });
@@ -581,8 +778,32 @@ function renderSettings(){
   html += "<h2>バックアップ</h2><div class='panel'>";
   html += "<button class='btn primary' id='btnExport'>現在のデータをJSONダウンロード</button>";
   html += "<span class='mut' style='font-size:12px;margin-left:10px'>データ本体はアプリと同じフォルダの data.js です（自動でバージョン管理されます）。</span></div>";
-  html += "<h2>データ概要</h2><div class='panel mut' style='font-size:13px'>ラウンド "+state.rounds.length+"件　／　ポジション "+state.positions.length+"件（解決済み "+state.positions.filter(p=>p.resolution).length+"件）　／　schemaVersion "+state.schemaVersion+"　／　最終更新 "+(state.updatedAt||"—")+"</div>";
+  // 習得マップ (v2.1.0)
+  const cprog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+  html += "<h2>習得マップ（投資のイロハ "+CURRICULUM_V1.length+"項目）</h2><div class='panel'>";
+  html += "<div class='mut' style='font-size:12px;margin-bottom:6px'>既読 "+curriculumReadCount()+"/"+CURRICULUM_V1.length+"　｜　グレー=未読、通常色=既読、✅=理解済み（既読チップをタップで理解済みを切替）</div>";
+  Object.keys(CURRICULUM_LAYER_LABEL).forEach(layer=>{
+    html += "<h3>"+CURRICULUM_LAYER_LABEL[layer]+"</h3><div class='learn-grid'>";
+    CURRICULUM_V1.filter(c=>c.layer===layer).forEach(c=>{
+      const rec = cprog[c.id];
+      const cls = rec&&rec.understood ? "done" : (rec&&rec.count>0 ? "read" : "unread");
+      html += "<div class='learn-chip "+cls+"' data-chip='"+esc(c.id)+"' title='"+esc(c.principle)+"'>"+(rec&&rec.understood?"✅ ":"")+esc(c.term)+"</div>";
+    });
+    html += "</div>";
+  });
+  html += "</div>";
+  html += "<h2>データ概要</h2><div class='panel mut' style='font-size:13px'>アプリ v"+APP_VERSION+"　／　ラウンド "+state.rounds.length+"件　／　ポジション "+state.positions.length+"件（解決済み "+state.positions.filter(p=>p.resolution).length+"件）　／　schemaVersion "+state.schemaVersion+"　／　最終更新 "+(state.updatedAt||"—")+"</div>";
   el.innerHTML = html;
+  el.querySelectorAll("[data-chip]").forEach(ch=>ch.addEventListener("click",()=>{
+    const id = ch.dataset.chip;
+    const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
+    const rec = prog[id];
+    if(!rec || rec.count<1){ showToast("未読の項目です。答え合わせで表示されると既読になります"); return; }
+    rec.understood = !rec.understood;
+    prog[id] = rec;
+    saveJsonKey(CURRICULUM_PROGRESS_KEY, prog);
+    renderSettings();
+  }));
   $("#btnExport").addEventListener("click",()=>{
     const blob = new Blob([JSON.stringify({schemaVersion:state.schemaVersion, updatedAt:state.updatedAt, rounds:state.rounds, positions:state.positions},null,2)],{type:"application/json"});
     const a = document.createElement("a");
@@ -592,7 +813,7 @@ function renderSettings(){
   });
 }
 /* ================= 初期化 ================= */
-$("#verLabel").textContent = "schema v"+SCHEMA_VERSION+"（全自動モード）";
+$("#verLabel").textContent = "v"+APP_VERSION+" / schema v"+SCHEMA_VERSION+"（全自動モード）";
 render();
 </script>
 </body>

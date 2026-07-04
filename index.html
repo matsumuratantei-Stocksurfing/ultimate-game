@@ -109,6 +109,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
     <button data-tab="dash" class="active">ダッシュボード</button>
     <button data-tab="rounds">ラウンド一覧</button>
     <button data-tab="measure">測定 (Layer 1)</button>
+    <button data-tab="obs">観測プール</button>
     <button data-tab="settings">設定</button>
   </nav>
 </header>
@@ -117,21 +118,24 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
   <section id="tab-dash" class="show"></section>
   <section id="tab-rounds"></section>
   <section id="tab-measure"></section>
+  <section id="tab-obs"></section>
   <section id="tab-settings"></section>
 </main>
 <div id="modalBack"><div id="modal"><button id="modalClose">✕</button><div id="modalBody"></div></div></div>
 <div id="toast"></div>
 <footer>究極ゲーム 記録・測定システム — 単一HTML / data.js自動更新 / 外部依存なし</footer>
 <script src="data.js"></script>
+<script src="obs.js"></script>
 <script>
 "use strict";
 /* ===== 変更履歴（松村式バージョン管理） =====
+ v2.3.0 (2026-07-03): 観測プールを追加（新高値ブレイク銘柄を毎週日米各5銘柄・機械的ルールで収集し+1週/+4週リターンを前向き追跡。obs.js駆動・6枠ゲームから独立）。
  v2.2.0 (2026-07-03): 新高値コンテキスト（52週高値/上場来高値との距離・ブレイク有無）の記録・表示・採用試験（バケット別成績）を追加。選定ロジックは不変（記録→測定→採用試験の原則）。
  v2.1.0 (2026-07-03): 投資イロハ学習機能を追加（CURRICULUM_V1 30項目・今回の学びカード・習得トラッカー/習得マップ・Claude深掘り質問コピー）。既存のBrier計算・測定ロジックは無変更。
  v2.0.0 (2026-07-03): 全自動モード（data.js駆動・手入力ゼロ）に刷新。GitHub Pages対応。
  v1.0.0 (2026-07-03): 初版（予測JSON手動取り込み版）。
 */
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "2.3.0";
 /* ================= 定数 ================= */
 const SCHEMA_VERSION = 1;
 const OVERRIDE_KEY = "ultimateGame_overrides_v1";
@@ -233,6 +237,14 @@ let dataProblems = [];
     const ov = JSON.parse(localStorage.getItem(OVERRIDE_KEY)||"{}");
     state.retiredCriteria = ov.retiredCriteria||{};
   }catch(e){ state.retiredCriteria = {}; }
+})();
+/* 観測プール読み込み（v2.3.0）: obs.js 未設置でも動作する */
+let obs = {observations:[], updatedAt:null};
+(function loadObs(){
+  const g = window.OBS_DATA;
+  if(!g) return;
+  obs.observations = Array.isArray(g.observations)? g.observations : [];
+  obs.updatedAt = g.updatedAt || null;
 })();
 function saveOverrides(){
   localStorage.setItem(OVERRIDE_KEY, JSON.stringify({retiredCriteria:state.retiredCriteria}));
@@ -536,6 +548,7 @@ function render(){
   if(currentTab==="dash") renderDash();
   if(currentTab==="rounds") renderRounds();
   if(currentTab==="measure") renderMeasure();
+  if(currentTab==="obs") renderObs();
   if(currentTab==="settings") renderSettings();
 }
 function renderBanner(){
@@ -808,6 +821,91 @@ function renderMeasure(){
     delete state.retiredCriteria[b.dataset.revive];
     saveOverrides(); renderMeasure();
   }));
+}
+/* ================= 観測プール (v2.3.0) =================
+   目的: 6枠の選定に入る前の土台となる「幅広い観測」。新高値ブレイク銘柄を機械的ルールで
+   毎週収集し、チェックポイント時点の前向きリターンを追跡して「本物の新高値」の共通項を数字で探す。
+   収集ルールは固定（間引き・恣意的選択は選択バイアスを生むため禁止）。ゲームの6枠とは完全に独立。
+   拡張規約: 収集規模はタスク側の設定のみで変更可。チェックポイントは checkpoints に w13 等の
+   キーを追加するだけで本タブの列・集計が自動対応する（アプリ改修不要）。 */
+const OBS_MIN_N = 10; // バケット別判定の最低サンプル門
+function obsCheckpointKeys(list){
+  const set = new Set();
+  list.forEach(o=>{ if(o.checkpoints) Object.keys(o.checkpoints).forEach(k=>set.add(k)); });
+  const arr = [...set];
+  arr.sort((a,b)=>(parseInt(a.replace(/\D/g,""))||0)-(parseInt(b.replace(/\D/g,""))||0));
+  return arr.length? arr : ["w1","w4"];
+}
+function obsCpLabel(k){ const n = parseInt(k.replace(/\D/g,"")); return isNaN(n)? k : "+"+n+"週"; }
+function obsReturn(o, cp){
+  const c = o.checkpoints && o.checkpoints[cp];
+  return (c && typeof c.returnPct==="number") ? c.returnPct : null;
+}
+function obsStats(arr, keys){
+  const per = {};
+  keys.forEach(k=>{
+    const r = arr.map(o=>obsReturn(o,k)).filter(v=>v!=null);
+    per[k] = {n:r.length, m:mean(r), win: r.length? r.filter(v=>v>0).length/r.length : NaN};
+  });
+  return {n:arr.length, per};
+}
+function renderObs(){
+  const el = $("#tab-obs");
+  const list = [...obs.observations].sort((a,b)=>String(b.week||"").localeCompare(String(a.week||"")));
+  let html = "<h2>観測プール — 新高値銘柄の前向き観測</h2>";
+  html += "<div class='msg info' style='font-size:12px'>6枠のゲームとは独立した観測専用データです（発注も選定もしません）。毎週月曜に新高値ブレイク銘柄を機械的ルール（出来高増加率上位・日米各5銘柄）で収集し、チェックポイント時点のリターンを自動追跡。「伸びた新高値」と「戻した新高値」の共通項を数字で探します。収集規模・チェックポイントは後から拡張できます。</div>";
+  if(!list.length){
+    el.innerHTML = html + "<div class='panel mut'>まだ観測データがありません。次の月曜朝の自動収集から蓄積が始まります。</div>";
+    return;
+  }
+  const keys = obsCheckpointKeys(list);
+  const lastKey = keys[keys.length-1];
+  const all = obsStats(list, keys);
+  html += "<div class='kpis'>";
+  html += kpi("観測銘柄数", all.n+"件", "機械的収集・全件保持");
+  keys.forEach(k=>{
+    const st = all.per[k];
+    html += kpi(obsCpLabel(k)+" 平均", st.n? fmtPct(st.m):"—", st.n+"件追跡済み"+(st.n?("・プラス率"+Math.round(st.win*100)+"%"):""), st.n?(st.m>0?"pos":"neg"):"");
+  });
+  html += "</div>";
+  const groups = [
+    {label:"出来高増あり", f:o=>o.features && o.features.volumeSurge===true},
+    {label:"出来高増なし", f:o=>o.features && o.features.volumeSurge===false},
+    {label:"出来高増不明", f:o=>!o.features || o.features.volumeSurge==null},
+    {label:"日本株", f:o=>o.market==="JP"},
+    {label:"米国株", f:o=>o.market==="US"},
+    {label:"地合いup", f:o=>o.features && o.features.regime && o.features.regime.trend==="up"},
+    {label:"地合いrange/down", f:o=>o.features && o.features.regime && o.features.regime.trend!=="up"}
+  ];
+  html += "<h2>特徴別集計（本物の新高値の共通項探し）</h2><div class='panel'>";
+  html += "<table><tr><th>グループ</th><th class='num'>件数</th>"+keys.map(k=>"<th class='num'>"+obsCpLabel(k)+"平均（プラス率）</th>").join("")+"<th>判定</th></tr>";
+  groups.forEach(g=>{
+    const arr = list.filter(g.f);
+    if(!arr.length) return;
+    const st = obsStats(arr, keys);
+    html += "<tr><td>"+esc(g.label)+"</td><td class='num'>"+st.n+"</td>";
+    keys.forEach(k=>{
+      const p = st.per[k];
+      html += "<td class='num "+(p.n?(p.m>0?"pos":"neg"):"")+"'>"+(p.n? fmtPct(p.m)+"（"+Math.round(p.win*100)+"%）":"—")+"</td>";
+    });
+    const nLast = st.per[lastKey].n;
+    html += "<td class='"+(nLast>=OBS_MIN_N?"":"dim")+"'>"+(nLast>=OBS_MIN_N?"判定可":"—（"+obsCpLabel(lastKey)+"追跡 "+nLast+"/"+OBS_MIN_N+"）")+"</td></tr>";
+  });
+  html += "</table><div class='philosophy'>グループ間で"+obsCpLabel(lastKey)+"リターンに明確な差が出たものが「本物の新高値の条件」候補。数件での結論は過学習——各グループ"+OBS_MIN_N+"件の門を待つ。</div></div>";
+  html += "<h2>観測一覧</h2><div class='panel'><table><tr><th>週</th><th>市場</th><th>銘柄</th><th>ブレイク日</th><th class='num'>基準値</th><th>出来高増</th>"+keys.map(k=>"<th class='num'>"+obsCpLabel(k)+"</th>").join("")+"</tr>";
+  list.slice(0,60).forEach(o=>{
+    html += "<tr><td>"+esc(o.week||"—")+"</td><td>"+esc(o.market||"—")+"</td><td><b>"+esc(o.ticker)+"</b> <span class='mut' style='font-size:11px'>"+esc(o.name||"")+"</span></td>";
+    html += "<td>"+esc(o.breakoutDate||"—")+"</td>";
+    html += "<td class='num'>"+(o.basePrice? fmtNum(o.basePrice.value):"—")+"</td>";
+    html += "<td>"+(o.features? (o.features.volumeSurge===true?"<span class='tag g'>あり</span>":o.features.volumeSurge===false?"<span class='tag'>なし</span>":"<span class='dim'>不明</span>"):"—")+"</td>";
+    keys.forEach(k=>{
+      const r = obsReturn(o,k);
+      html += "<td class='num "+(r!=null?pctClass(r):"")+"'>"+(r!=null?fmtPct(r):"<span class='dim'>追跡中</span>")+"</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</table>"+(list.length>60?"<div class='dim' style='font-size:11px;margin-top:4px'>表示は最新60件（記録は全"+list.length+"件保持）</div>":"")+"</div>";
+  el.innerHTML = html;
 }
 /* ================= 設定 ================= */
 function renderSettings(){

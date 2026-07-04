@@ -126,11 +126,12 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
 <script>
 "use strict";
 /* ===== 変更履歴（松村式バージョン管理） =====
+ v2.2.0 (2026-07-03): 新高値コンテキスト（52週高値/上場来高値との距離・ブレイク有無）の記録・表示・採用試験（バケット別成績）を追加。選定ロジックは不変（記録→測定→採用試験の原則）。
  v2.1.0 (2026-07-03): 投資イロハ学習機能を追加（CURRICULUM_V1 30項目・今回の学びカード・習得トラッカー/習得マップ・Claude深掘り質問コピー）。既存のBrier計算・測定ロジックは無変更。
  v2.0.0 (2026-07-03): 全自動モード（data.js駆動・手入力ゼロ）に刷新。GitHub Pages対応。
  v1.0.0 (2026-07-03): 初版（予測JSON手動取り込み版）。
 */
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.2.0";
 /* ================= 定数 ================= */
 const SCHEMA_VERSION = 1;
 const OVERRIDE_KEY = "ultimateGame_overrides_v1";
@@ -339,6 +340,19 @@ function returnPct(pos){
   const raw = (pos.resolution.resultPrice.value/pos.entry.value - 1)*100;
   return pos.direction==="ショート"? -raw : raw;
 }
+/* ================= 新高値コンテキスト（v2.2.0・採用試験） =================
+   「有益そうな要因」は選定に直接足さず、まず全ポジションに記録して勝敗との関係を測定する。
+   バケット別の成績が十分なサンプルで確認できた場合のみ、人間の判断（チャットでの相談）で選定基準へ昇格させる。 */
+function newHighBucket(p){
+  const nh = p.newHighContext;
+  if(!nh) return null;
+  if(nh.breakout===true) return "新高値ブレイク直後";
+  if(typeof nh.dist52wPct==="number" && nh.dist52wPct>=-5) return "高値圏（ブレイクなし）";
+  if(typeof nh.dist52wPct==="number") return "高値圏外";
+  return "情報不足";
+}
+const NEWHIGH_BUCKETS = ["新高値ブレイク直後","高値圏（ブレイクなし）","高値圏外","情報不足"];
+const NEWHIGH_MIN_N = 10; // バケット別判定の最低サンプル門
 /* ================= 投資イロハ学習機能 (v2.1.0) =================
    外部API不使用・ルールベース。既存の測定ロジックには一切影響しない。 */
 function loadJsonKey(key){ try{ return JSON.parse(localStorage.getItem(key)||"{}"); }catch(e){ return {}; } }
@@ -616,6 +630,14 @@ function showDetail(id){
       });
     }
     html += "<dt>損切りライン</dt><dd>"+(p.stopLoss? fmtNum(p.stopLoss):"—")+"</dd>";
+    if(p.newHighContext){
+      const nh = p.newHighContext;
+      let nhTxt = (typeof nh.dist52wPct==="number"? "52週高値比 "+fmtPct(nh.dist52wPct) : "52週高値比 —");
+      if(typeof nh.distAthPct==="number") nhTxt += "　上場来高値比 "+fmtPct(nh.distAthPct);
+      nhTxt += nh.breakout===true? " <span class='tag g'>新高値ブレイク直後</span>" : nh.breakout===false? " <span class='tag'>ブレイクなし</span>" : " <span class='dim'>ブレイク情報なし</span>";
+      if(nh.breakoutVolume===true) nhTxt += "<span class='tag b'>出来高増</span>";
+      html += "<dt>新高値コンテキスト</dt><dd>"+nhTxt+"</dd>";
+    }
     html += "</dl>";
     html += "<h3>選定理由（論拠）</h3><div class='thesis-box'>"+esc(p.thesis||"—")+"</div>";
     if(p.scores){
@@ -730,6 +752,29 @@ function renderMeasure(){
   });
   html += "</table>";
   html += "<div class='philosophy'>「効いていない」は提案のみ。実際の削除はここでの人間の確定操作でのみ行われる（自動削除禁止）。削除を確定したら、Coworkチャットにも「基準◯◯を削除確定した」と一言伝えてください（自動予測タスクに反映されます）。</div>";
+  html += "</div>";
+  // 新高値コンテキスト別成績（採用試験・v2.2.0）
+  const nhAll = resolvedPositions().filter(p=>p.newHighContext);
+  html += "<h2>新高値コンテキスト別成績（採用試験）</h2><div class='panel'>";
+  if(!nhAll.length){
+    html += "<div class='mut' style='font-size:12px'>まだ記録がありません。次回の予測から各銘柄に52週高値との距離・新高値ブレイクの有無が自動記録され、ここで「新高値視点が本当に勝敗を区別するか」を測定します。判定は各バケット"+NEWHIGH_MIN_N+"件以上で表示されます。</div>";
+  } else {
+    html += "<table><tr><th>バケット</th><th class='num'>件数</th><th class='num'>勝率(◎○)</th><th class='num'>平均リターン</th><th class='num'>平均Brier</th><th>判定</th></tr>";
+    NEWHIGH_BUCKETS.forEach(b=>{
+      const g = nhAll.filter(p=>newHighBucket(p)===b);
+      if(!g.length) return;
+      const wins = g.filter(p=>["◎","○"].includes(p.resolution.judgment)).length;
+      const rets = g.map(returnPct).filter(v=>v!=null);
+      const bss = g.map(computeBrier).filter(v=>v!=null);
+      const mr = mean(rets);
+      html += "<tr><td>"+esc(b)+"</td><td class='num'>"+g.length+"</td>";
+      html += "<td class='num'>"+Math.round(wins/g.length*100)+"%</td>";
+      html += "<td class='num "+(isNaN(mr)?"":(mr>0?"pos":"neg"))+"'>"+(rets.length?fmtPct(mr):"—")+"</td>";
+      html += "<td class='num'>"+(bss.length?mean(bss).toFixed(3):"—")+"</td>";
+      html += "<td class='"+(g.length>=NEWHIGH_MIN_N?"":"dim")+"'>"+(g.length>=NEWHIGH_MIN_N? "判定可（バケット間の差を比較）":"—（データ不足 "+g.length+"/"+NEWHIGH_MIN_N+"）")+"</td></tr>";
+    });
+    html += "</table><div class='philosophy'>採用試験: バケット間で勝率・平均リターン・Brierに明確な差が出た場合のみ、人間の確定操作（チャットでの相談）を経て選定基準へ昇格させる。それまで選定ロジックは変えない（単一変数の原則）。</div>";
+  }
   html += "</div>";
   const disc = disciplineStats();
   html += "<h2>規律スコア（予測精度とは分離して測定）</h2><div class='kpis'>";

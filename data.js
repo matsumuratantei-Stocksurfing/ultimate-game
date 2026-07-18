@@ -1,6 +1,69 @@
 window.GAME_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-03（初期化。初回の自動予測は次の月曜朝に反映されます）",
-  "rounds": [],
-  "positions": []
+  "updatedAt": "2026-07-18（2026-W29 初回自動予測を登録）",
+  "rounds": [
+    {"roundId":"2026-W29","announcedAt":"2026-07-18",
+     "regimeTag":{"vixBucket":"mid","trend":"down","fearGreed":43},
+     "note":"7/17(金)に日米急落。日経64,141.12円(-4.03%、下げ幅歴代5位・キオクシア巨額賠償S安)、S&P500 7,457.69(-1.01%、50日線割れ)、Nasdaq -1.4%(週間-2.9%)。VIX 17.76前後(7/16終値15.67から急上昇)、Fear&Greed 43(fear)。背景: 中国Moonshot AIの高性能オープンモデル公開でAI設備投資減速懸念→半導体急落、米イラン衝突再燃でWTI 80ドル台に急伸(エネルギー株のみ逆行高)、ドル円162.4円、米10年債4.53%。来週: 7/21週に米決算本格化(Alphabet/Tesla等)、FOMC 7/28-29、日銀会合7/30-31。"}
+  ],
+  "positions": [
+    {"id":"2026-W29-week-JP","roundId":"2026-W29","horizon":"week","market":"JP","direction":"ロング",
+     "ticker":"1605","name":"ＩＮＰＥＸ",
+     "entry":{"value":3514,"date":"2026-07-14","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/15〜7/17の終値は検索で確認できず。確認できた直近終値=7/14(日経報道: +123円/+3.62%の3,514円)。7/17は鉱業セクターが物色された報道ありだが数値未確認。"},
+     "scores":{"themeMatch":8,"catalystStrength":8,"supplyDemand":6,"upside":6,"downsideControl":5,"moneyFlow":7},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.30,"price":3750},"base":{"prob":0.40,"price":3550},"bear":{"prob":0.30,"price":3300}},
+     "thesis":"米イラン衝突再燃・ホルムズ海峡緊張でWTIが80ドル台。原油80ドル超が週内維持されれば収益期待で3,600円台回復が正しさの条件。AI急落相場の中でエネルギーはほぼ唯一の逆行セクターで資金退避先。停戦報道が出れば原油と共に即崩れる（プレモーテム: 突然の停戦合意→原油-8%→本銘柄-5%超で bear 直行。よって bear 0.30 と厚め）。",
+     "stopLoss":3300,"targetDate":"2026-07-24",
+     "newHighContext":{"dist52wPct":-29.1,"distAthPct":null,"breakout":false,"breakoutVolume":false,"note":"52週高値=年初来高値4,955円(2026-03-30、野村/96ut時系列で確認。2025年9-12月終値は3,300円以下のため52週高値と判断)"}},
+
+    {"id":"2026-W29-week-US","roundId":"2026-W29","horizon":"week","market":"US","direction":"ロング",
+     "ticker":"XOM","name":"ExxonMobil",
+     "entry":{"value":148.14,"date":"2026-07-17","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/17レンジ147.01-150.00、検索時点表示148.14を終値推定として採用"},
+     "scores":{"themeMatch":7,"catalystStrength":7,"supplyDemand":6,"upside":5,"downsideControl":6,"moneyFlow":6},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.30,"price":156},"base":{"prob":0.45,"price":149},"bear":{"prob":0.25,"price":141}},
+     "thesis":"7/17に米市場でエネルギーが唯一の上昇セクター（WTI +2%で80ドル台、米イラン衝突激化）。原油80ドル台維持＋リスクオフ継続でディフェンシブ資金が向かえば正しい。INPEXと同一テーゼの日米ペア（意図的な相関、記録として明示）。プレモーテム: 停戦合意で原油急落＋ハイテク反発のリスクオン転換なら両建てで負う。",
+     "stopLoss":141,"targetDate":"2026-07-24",
+     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":null,"breakoutVolume":null,"note":"52週高値の値・日付未確認のためnull（7/17高値150.00が52週高値圏の可能性あり）"}},
+
+    {"id":"2026-W29-month-JP","roundId":"2026-W29","horizon":"month","market":"JP","direction":"ロング",
+     "ticker":"8306","name":"三菱ＵＦＪフィナンシャル・グループ",
+     "entry":{"value":3473,"date":"2026-07-17","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true},
+     "scores":{"themeMatch":6,"catalystStrength":7,"supplyDemand":5,"upside":6,"downsideControl":5,"moneyFlow":4},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.25,"price":3700},"base":{"prob":0.45,"price":3520},"bear":{"prob":0.30,"price":3250}},
+     "thesis":"ドル円162円台の円安と米10年債4.5%台で、7/30-31日銀会合での引き締め示唆の蓋然性が上昇。全面安の7/17に-4.30%と指数並みに売られており、AIバブル調整と直接関係の薄い銀行がベータで売られた分の戻り＋日銀タカ派化が重なれば3,600円台回復が正しさの条件。プレモーテム: 世界株安が信用収縮に発展すれば銀行は逆にベータで下げ続ける／日銀が円安でも据え置きハト派なら失望売り。moneyFlow=4は直近の資金流出を正直に反映。",
+     "stopLoss":3190,"targetDate":"2026-08-14",
+     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":null,"breakoutVolume":null,"note":"52週高値の値・日付未確認のためnull"}},
+
+    {"id":"2026-W29-month-US","roundId":"2026-W29","horizon":"month","market":"US","direction":"ロング",
+     "ticker":"V","name":"Visa",
+     "entry":{"value":358.30,"date":"2026-07-17","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true},
+     "scores":{"themeMatch":6,"catalystStrength":5,"supplyDemand":6,"upside":5,"downsideControl":7,"moneyFlow":6},
+     "exclusionCheck":{"expectationAhead":true,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.30,"price":382},"base":{"prob":0.45,"price":362},"bear":{"prob":0.25,"price":335}},
+     "thesis":"7/16に52週高値更新（S&P500新高値46銘柄の時価総額2位）。AI設備投資・原油の両リスクと関係が薄い決済ネットワークで、リスクオフ下の資金退避先として機能するかの検証。売上+14.4%・営業利益率67%で新高値の質が高い（Welltower型の期待先行と対照的）。7月末決算通過後も360ドル台を維持できれば正しい。exclusionCheck.expectationAhead=true（新高値圏で決算が月内にあり期待先行の懸念。原則回避に反する選定であることを偽装せず記録）。プレモーテム: 決算で消費減速が示されると新高値銘柄ゆえ下げがきつい→bear 335。",
+     "stopLoss":333,"targetDate":"2026-08-14",
+     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":true,"breakoutVolume":null,"note":"7/16に52週高値更新（Trefis確認）。高値の正確な値は未確認のためdistはnull"}},
+
+    {"id":"2026-W29-quarter-JP","roundId":"2026-W29","horizon":"quarter","market":"JP","direction":"ロング",
+     "ticker":"7011","name":"三菱重工業",
+     "entry":{"value":3823,"date":"2026-07-16","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/17終値は未確認（前場3,693円の報道あり＝エントリー値より約3%下。翌週の確定値で要上書き）"},
+     "scores":{"themeMatch":7,"catalystStrength":6,"supplyDemand":5,"upside":7,"downsideControl":5,"moneyFlow":5},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.30,"price":4450},"base":{"prob":0.40,"price":3950},"bear":{"prob":0.30,"price":3400}},
+     "thesis":"高木政権の防衛費増額方針＋中東・地政学の構造的緊張という季スパンのテーマ。3月高値から2割超調整済みで期待剥落が進んだ状態からの回復を狙う。エヌビディアとのAIデータセンター連携報道(7/15-16)は選定理由にしない（AI設備投資懸念の火中でありプラスにもマイナスにも振れる）。10月中旬までに4,000円台回復・定着が正しさの条件。プレモーテム: 円高転換＋AI連携案件の期待剥落＋防衛予算執行遅れが重なると3,400円割れ。","stopLoss":3330,"targetDate":"2026-10-16",
+     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":false,"breakoutVolume":null,"note":"3月高値から2割超下落との報道のみで52週高値の正確な値・日付未確認→null（推計では約-20%）"}},
+
+    {"id":"2026-W29-quarter-US","roundId":"2026-W29","horizon":"quarter","market":"US","direction":"ロング",
+     "ticker":"AAPL","name":"Apple",
+     "entry":{"value":333.74,"date":"2026-07-17","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true},
+     "scores":{"themeMatch":6,"catalystStrength":6,"supplyDemand":7,"upside":6,"downsideControl":5,"moneyFlow":7},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":true,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.30,"price":372},"base":{"prob":0.45,"price":338},"bear":{"prob":0.25,"price":295}},
+     "thesis":"半導体急落の7/17に+0.14%と逆行し7/16に52週高値更新（1ヶ月+12.4%、1年+60%）。AI設備投資の売り手側でなく端末側のため、AIバブル調整の直撃を受けにくい相対強者か検証。9月の新型iPhoneサイクルが季内カタリスト。10月中旬に340ドル以上維持なら正しい。exclusionCheck.athLongTerm=true（時価総額4.89兆ドルの史上高値圏。原則回避に反する選定と自覚して記録。1年+60%は期待の先食いの可能性大）。プレモーテム: ハイテク調整が波及すれば高値圏ゆえ-15%は普通に起こる→bear 295。",
+     "stopLoss":299,"targetDate":"2026-10-16",
+     "newHighContext":{"dist52wPct":0.0,"distAthPct":0.0,"breakout":true,"breakoutVolume":null,"note":"7/16に52週高値更新（Trefis確認）、7/17終値333.74は高値圏。1年+60%のため52週高値≒上場来高値と判断"}}
+  ]
 };

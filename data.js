@@ -1,6 +1,6 @@
 window.GAME_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-18（2026-W29 初回自動予測を登録）",
+  "updatedAt": "2026-07-20（W30定期実行: 6枠全てオープンのため新規なし。1605/7011/XOMのエントリー値を7/17確定終値で上書き）",
   "rounds": [
     {"roundId":"2026-W29","announcedAt":"2026-07-18",
      "regimeTag":{"vixBucket":"mid","trend":"down","fearGreed":43},
@@ -9,7 +9,7 @@ window.GAME_DATA = {
   "positions": [
     {"id":"2026-W29-week-JP","roundId":"2026-W29","horizon":"week","market":"JP","direction":"ロング",
      "ticker":"1605","name":"ＩＮＰＥＸ",
-     "entry":{"value":3514,"date":"2026-07-14","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/15〜7/17の終値は検索で確認できず。確認できた直近終値=7/14(日経報道: +123円/+3.62%の3,514円)。7/17は鉱業セクターが物色された報道ありだが数値未確認。"},
+     "entry":{"value":3401,"date":"2026-07-17","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/20定期実行で確定値に上書き（旧値: 3,514円/7-14）。7/17終値3,401円(-28円/-0.82%、Yahoo!ファイナンス検索)。全面安の7/17に-0.82%と相対的に底堅かった。"},
      "scores":{"themeMatch":8,"catalystStrength":8,"supplyDemand":6,"upside":6,"downsideControl":5,"moneyFlow":7},
      "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
      "scenarios":{"bull":{"prob":0.30,"price":3750},"base":{"prob":0.40,"price":3550},"bear":{"prob":0.30,"price":3300}},
@@ -19,7 +19,7 @@ window.GAME_DATA = {
 
     {"id":"2026-W29-week-US","roundId":"2026-W29","horizon":"week","market":"US","direction":"ロング",
      "ticker":"XOM","name":"ExxonMobil",
-     "entry":{"value":148.14,"date":"2026-07-17","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/17レンジ147.01-150.00、検索時点表示148.14を終値推定として採用"},
+     "entry":{"value":147.36,"date":"2026-07-17","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/20定期実行で確定値に上書き（旧値: 148.14=ザラ場表示の推定）。7/17終値147.36ドル（検索確認）。"},
      "scores":{"themeMatch":7,"catalystStrength":7,"supplyDemand":6,"upside":5,"downsideControl":6,"moneyFlow":6},
      "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
      "scenarios":{"bull":{"prob":0.30,"price":156},"base":{"prob":0.45,"price":149},"bear":{"prob":0.25,"price":141}},
@@ -49,7 +49,7 @@ window.GAME_DATA = {
 
     {"id":"2026-W29-quarter-JP","roundId":"2026-W29","horizon":"quarter","market":"JP","direction":"ロング",
      "ticker":"7011","name":"三菱重工業",
-     "entry":{"value":3823,"date":"2026-07-16","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/17終値は未確認（前場3,693円の報道あり＝エントリー値より約3%下。翌週の確定値で要上書き）"},
+     "entry":{"value":3681,"date":"2026-07-17","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/20定期実行で確定値に上書き（旧値: 3,823円/7-16）。7/17終値3,681円(-142円/-3.71%、Yahoo!ファイナンス検索)。"},
      "scores":{"themeMatch":7,"catalystStrength":6,"supplyDemand":5,"upside":7,"downsideControl":5,"moneyFlow":5},
      "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
      "scenarios":{"bull":{"prob":0.30,"price":4450},"base":{"prob":0.40,"price":3950},"bear":{"prob":0.30,"price":3400}},

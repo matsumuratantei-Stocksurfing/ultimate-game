@@ -1,6 +1,6 @@
 window.GAME_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-20（W30定期実行: 6枠全てオープンのため新規なし。1605/7011/XOMのエントリー値を7/17確定終値で上書き）",
+  "updatedAt": "2026-07-25（W30土曜答え合わせ: 週枠2件を解決。1605=3,706円(+8.97%,bull,◎)、XOM=156.83ドル(+6.43%,bull,◎)。月枠・季枠は期限未到来のためオープン継続）",
   "rounds": [
     {"roundId":"2026-W29","announcedAt":"2026-07-18",
      "regimeTag":{"vixBucket":"mid","trend":"down","fearGreed":43},
@@ -15,7 +15,18 @@ window.GAME_DATA = {
      "scenarios":{"bull":{"prob":0.30,"price":3750},"base":{"prob":0.40,"price":3550},"bear":{"prob":0.30,"price":3300}},
      "thesis":"米イラン衝突再燃・ホルムズ海峡緊張でWTIが80ドル台。原油80ドル超が週内維持されれば収益期待で3,600円台回復が正しさの条件。AI急落相場の中でエネルギーはほぼ唯一の逆行セクターで資金退避先。停戦報道が出れば原油と共に即崩れる（プレモーテム: 突然の停戦合意→原油-8%→本銘柄-5%超で bear 直行。よって bear 0.30 と厚め）。",
      "stopLoss":3300,"targetDate":"2026-07-24",
-     "newHighContext":{"dist52wPct":-29.1,"distAthPct":null,"breakout":false,"breakoutVolume":false,"note":"52週高値=年初来高値4,955円(2026-03-30、野村/96ut時系列で確認。2025年9-12月終値は3,300円以下のため52週高値と判断)"}},
+     "newHighContext":{"dist52wPct":-29.1,"distAthPct":null,"breakout":false,"breakoutVolume":false,"note":"52週高値=年初来高値4,955円(2026-03-30、野村/96ut時系列で確認。2025年9-12月終値は3,300円以下のため52週高値と判断)"},
+     "resolution":{
+       "resultPrice":{"value":3706,"date":"2026-07-24","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値3,706円(+9円/+0.24%、Stockopedia/TradingEconomics系の7/24付データ)。7/23終値3,697円(Yahoo!ファイナンス実測)+9円と整合しチェーン検証済み。4日続伸"},
+       "returnPct":8.97,
+       "corporateAction":"なし",
+       "whichScenarioHit":"bull",
+       "judgment":"◎",
+       "thesisValidated":"正しい",
+       "stopLossDiscipline":"該当なし",
+       "learning":{"type":"勝ちパターン候補","note":"『AI調整相場でエネルギーが唯一の資金退避先』テーゼが原油93ドル台（ホルムズ海峡・バブエルマンデブ封鎖表明）でそのまま機能。ただし戦況エスカレーション依存の1サンプルで、XOMと同一要因の日米ペアのため実質1勝としてカウントすべき"},
+       "note":"週間+8.97%(3,401→3,706)。bull目標3,750には44円届かずだがシナリオ距離ではbullが最近接。正しさの条件『原油80ドル超維持で3,600円台回復』は達成(WTIは一時93ドル台)。週中安値でも3,300のstopLossに接触した形跡なし(7/21以降4日続伸)",
+       "resolvedAt":"2026-07-25T08:18:16+09:00","auto":true}},
 
     {"id":"2026-W29-week-US","roundId":"2026-W29","horizon":"week","market":"US","direction":"ロング",
      "ticker":"XOM","name":"ExxonMobil",
@@ -25,7 +36,18 @@ window.GAME_DATA = {
      "scenarios":{"bull":{"prob":0.30,"price":156},"base":{"prob":0.45,"price":149},"bear":{"prob":0.25,"price":141}},
      "thesis":"7/17に米市場でエネルギーが唯一の上昇セクター（WTI +2%で80ドル台、米イラン衝突激化）。原油80ドル台維持＋リスクオフ継続でディフェンシブ資金が向かえば正しい。INPEXと同一テーゼの日米ペア（意図的な相関、記録として明示）。プレモーテム: 停戦合意で原油急落＋ハイテク反発のリスクオン転換なら両建てで負う。",
      "stopLoss":141,"targetDate":"2026-07-24",
-     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":null,"breakoutVolume":null,"note":"52週高値の値・日付未確認のためnull（7/17高値150.00が52週高値圏の可能性あり）"}},
+     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":null,"breakoutVolume":null,"note":"52週高値の値・日付未確認のためnull（7/17高値150.00が52週高値圏の可能性あり）"},
+     "resolution":{
+       "resultPrice":{"value":156.83,"date":"2026-07-24","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値156.83ドル(-0.04%、GuruFocus 7/24付記事で確認。6日続伸が7/24に小幅反落で途切れたが高値圏維持)。Google Finance 7/24日中スナップショット(156.58)とも整合"},
+       "returnPct":6.43,
+       "corporateAction":"なし",
+       "whichScenarioHit":"bull",
+       "judgment":"◎",
+       "thesisValidated":"正しい",
+       "stopLossDiscipline":"該当なし",
+       "learning":{"type":"勝ちパターン候補","note":"INPEXと同一テーゼの日米ペア。原油高継続＋リスクオフでエネルギーに資金退避のメカニズムが機能し6日続伸でbull目標156を超過。ペアで同一要因のため実質1勝(サンプル水増しに注意)"},
+       "note":"週間+6.43%(147.36→156.83)。bull目標156を7/23に超過し◎。6営業日で+8.57%(同期間S&P500は-2.17%)と明確な逆行高。stopLoss 141接触なし",
+       "resolvedAt":"2026-07-25T08:18:16+09:00","auto":true}},
 
     {"id":"2026-W29-month-JP","roundId":"2026-W29","horizon":"month","market":"JP","direction":"ロング",
      "ticker":"8306","name":"三菱ＵＦＪフィナンシャル・グループ",

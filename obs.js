@@ -1,6 +1,6 @@
 window.OBS_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-25（W30土曜答え合わせ: 8銘柄中7銘柄のw1(7/24終値)を照合し記録。150Aのみ7/24終値が確認できず保留(null維持)。7/24は日経-2.73%の急落日、米はS&P小幅安の週安値圏）",
+  "updatedAt": "2026-07-28（W31定期実行: W30(7/21-7/24)の新高値ブレイク観測9銘柄を追加（JP5/US4）。JPは7/25株探週間記事の7/24終値スナップショットでチェーン検証済み(ブロンコB 2,540→7/27 2,647の前日比+107が整合)。US5枠目はJAZZ/PAG/MUSA等の終値が確認できずスキップ。150Aのw1は引き続き保留）",
   "observations": [
     {"id":"OBS-2026-W29-JP-7581","week":"2026-W29","market":"JP","ticker":"7581","name":"サイゼリヤ",
      "breakoutDate":"2026-07-16",
@@ -57,6 +57,69 @@ window.OBS_DATA = {
      "basePrice":{"value":117.72,"date":"2026-07-17","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/20定期実行で補完追加。7/16にS&P500 52週高値46銘柄リスト入り(Trefis、1D+3.8%)。7/17終値117.72ドル(+0.48%、検索確認)"},
      "features":{"volumeRatio":null,"volumeSurge":null,"dist52wPct":0,"theme":"物流・運輸（7/16の1D+3.8%、1年+25.8%。鉄道・運輸セクターに新高値集中の週）","marketCapBucket":"大型","regime":{"vixBucket":"mid","trend":"down","fearGreed":43}},
      "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※出来高増加率が確認できないため『7/16 S&P500 52週高値銘柄×1日騰落率上位』で代替。7/18収集時に価格未確認でスキップした次点を7/20に価格確認の上繰り上げ。dist52wPctは52週高値の正確な値が未確認のためブレイク日直後につき0と近似",
-     "checkpoints":{"w1":{"value":114.79,"date":"2026-07-24","isEstimate":true,"returnPct":-2.49,"note":"Benzinga 7/24 At close(-0.60%、日中113.30-115.44)。7/20に-3.88%(113.15)まで下げた後の戻り途上。7/28にQ2決算控え。分割等なし"},"w4":null},"dueW1":"2026-07-24","dueW4":"2026-08-14","status":"partial"}
+     "checkpoints":{"w1":{"value":114.79,"date":"2026-07-24","isEstimate":true,"returnPct":-2.49,"note":"Benzinga 7/24 At close(-0.60%、日中113.30-115.44)。7/20に-3.88%(113.15)まで下げた後の戻り途上。7/28にQ2決算控え。分割等なし"},"w4":null},"dueW1":"2026-07-24","dueW4":"2026-08-14","status":"partial"},
+
+    {"id":"OBS-2026-W30-JP-1518","week":"2026-W30","market":"JP","ticker":"1518","name":"三井松島ホールディングス",
+     "breakoutDate":"2026-07-24",
+     "basePrice":{"value":2241,"date":"2026-07-24","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値2,241円。同日ザラ場で年初来高値を1,953円→2,273円に更新（株式ちゃんねる年初来高値更新ランキング1位）"},
+     "features":{"volumeRatio":3.49,"volumeSurge":true,"dist52wPct":-1.41,"theme":"石炭・エネルギー資源（話題株ダイジェスト掲載週）","marketCapBucket":"小型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）。FISCO出来高変化率ランキング7/24 14時台349.37%(632.5万株)で唯一volumeRatio実測あり",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-JP-2354","week":"2026-W30","market":"JP","ticker":"2354","name":"ＹＥ ＤＩＧＩＴＡＬ",
+     "breakoutDate":"2026-07-21",
+     "basePrice":{"value":1600,"date":"2026-07-24","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"株探7/25 9:00配信記事の株価スナップショット(1,600円/+160円)を7/24終値と判断。ブロンコB 2,540→7/27終値2,647(+107)の連続性で同スナップショットの日付をチェーン検証済み"},
+     "features":{"volumeRatio":null,"volumeSurge":true,"dist52wPct":0,"theme":"AI・物流DX（7/16エヌビディア協業発表→7/21に一時+27%で2016年高値1,331円超え10年ぶり最高値）","marketCapBucket":"小型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※出来高増加率の数値未確認のため『上場来/10年高値更新×急騰・ショートカバー誘発』の交差で代替。貸株ショート買い戻し主導は選択バイアス要因として記録（shortCover類型）",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-JP-3091","week":"2026-W30","market":"JP","ticker":"3091","name":"ブロンコビリー",
+     "breakoutDate":"2026-07-23",
+     "basePrice":{"value":2540,"date":"2026-07-24","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値2,540円(株探週間記事スナップショット)。7/27終値2,647円(+107円/+4.21%)と整合。7/23に利益・配当予想の増額修正を好感し上場来高値（ウエルスアドバイザー＜23日の動意株＞）"},
+     "features":{"volumeRatio":null,"volumeSurge":true,"dist52wPct":0,"theme":"外食・26年12月期営業益39.7億円へ上方修正＋増配（上期58%増益）","marketCapBucket":"中型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※出来高増加率の数値未確認のため『上場来高値更新×決算カタリスト』の交差で代替",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-JP-7175","week":"2026-W30","market":"JP","ticker":"7175","name":"今村証券",
+     "breakoutDate":"2026-07-24",
+     "basePrice":{"value":1720,"date":"2026-07-24","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値1,720円(株探週間記事スナップショット、チェーン検証は3091に依拠)。4-6月期決算速報値が好感され上場来高値。週内の正確な更新日は未確認のため週末日で代用"},
+     "features":{"volumeRatio":null,"volumeSurge":true,"dist52wPct":0,"theme":"証券・4-6月期決算速報好感（東証S小型）","marketCapBucket":"小型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※同上の代替規則（小型×決算カタリストで出来高急増の蓋然性高いがvolumeRatio未実測）",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-JP-4972","week":"2026-W30","market":"JP","ticker":"4972","name":"綜研化学",
+     "breakoutDate":"2026-07-24",
+     "basePrice":{"value":3795,"date":"2026-07-24","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値3,795円(株探週間記事スナップショット)。アクシウムの保有割合22.60%上昇を材料に上場来高値。週内の正確な更新日は未確認のため週末日で代用"},
+     "features":{"volumeRatio":null,"volumeSurge":null,"dist52wPct":0,"theme":"化学・アクティビスト保有増（大量保有変更報告）","marketCapBucket":"小型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※同上の代替規則。5枠目はSOMPO(8630)と迷い、機械的タイブレーク『小型優先(出来高比率が高く出やすい)』で選定と記録",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-US-DGX","week":"2026-W30","market":"US","ticker":"DGX","name":"Quest Diagnostics",
+     "breakoutDate":"2026-07-23",
+     "basePrice":{"value":225.50,"date":"2026-07-23","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/23終値約225.50ドル(StocksToTrade 7/23付記事)。翌7/24始値225.95と整合。7/23に+8.6%(オンコロジー事業評価)で52週高値（Trefis 7/24付ミッドキャップ52週高値リスト、同リストは7/23終値ベース）"},
+     "features":{"volumeRatio":null,"volumeSurge":true,"dist52wPct":0,"theme":"ヘルスケア検査・オンコロジー強化（1ヶ月+16.0%）","marketCapBucket":"中型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※出来高増加率が確認できないため『Trefis 52週高値リスト×1日騰落率上位』で代替（1D+8.6%は12銘柄中1位）",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-US-FCNCA","week":"2026-W30","market":"US","ticker":"FCNCA","name":"First Citizens BancShares",
+     "breakoutDate":"2026-07-23",
+     "basePrice":{"value":2152.93,"date":"2026-07-23","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"※7/23のザラ場水準2,152.93ドル(+75.36、Stock Observer)で終値は未確認。52週高値2,237.82(Investing.com)。7/23のQ2決算EPS57.09(予想41.75を大幅超過、売上は未達)で急伸。w1照合時に正確な終値へ要修正"},
+     "features":{"volumeRatio":null,"volumeSurge":true,"dist52wPct":-3.79,"theme":"地銀・Q2決算EPS大幅ビート（1D+6.5%）","marketCapBucket":"中型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※同上の代替規則（1D+6.5%は2位）。dist52wPctは(2152.93-2237.82)/2237.82で算出",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-US-LH","week":"2026-W30","market":"US","ticker":"LH","name":"Labcorp Holdings",
+     "breakoutDate":"2026-07-24",
+     "basePrice":{"value":296.77,"date":"2026-07-24","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/24終値296.77ドル＝上場来最高終値(MacroTrends明記)。52週ザラ場高値298.58(Investing.com)。7/23も+3.4%で52週高値リスト入り"},
+     "features":{"volumeRatio":null,"volumeSurge":null,"dist52wPct":-0.61,"theme":"ヘルスケア検査（DGXと同業種2社同時ブレイク＝セクター現象）","marketCapBucket":"中型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※同上の代替規則（1D+3.4%は3位）。dist52wPctは(296.77-298.58)/298.58で算出",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"},
+
+    {"id":"OBS-2026-W30-US-ILMN","week":"2026-W30","market":"US","ticker":"ILMN","name":"Illumina",
+     "breakoutDate":"2026-07-23",
+     "basePrice":{"value":189.41,"date":"2026-07-27","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"※検索スナップショット直近値189.41ドル(stockanalysis.com)。日付は7/27前後と推定で確度低。w1照合時に日付付き終値へ要修正。7/23に+3.1%で52週高値リスト入り(1ヶ月+19.4%、1年+92.9%、時価総額$30.1Bでリスト内最大)"},
+     "features":{"volumeRatio":null,"volumeSurge":null,"dist52wPct":0,"theme":"遺伝子解析・ヘルスケア（リスト12銘柄中6銘柄がヘルスケアの週）","marketCapBucket":"中型","regime":{"vixBucket":"mid","trend":"range","fearGreed":40}},
+     "selectionRule":"新高値ブレイク×出来高増加率上位5（機械的・v1）※同上の代替規則（1D+3.1%は4位）。5位のJAZZ(+1.8%)は価格未確認のためスキップし、次点PAG/MUSA/RPRX/OHI/AITも価格未確認のため米国は4銘柄で打ち切り（機械的ルールを維持し恣意的差し替えはせず）",
+     "checkpoints":{"w1":null,"w4":null},"dueW1":"2026-07-31","dueW4":"2026-08-21","status":"open"}
   ]
 };

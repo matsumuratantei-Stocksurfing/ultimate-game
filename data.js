@@ -1,12 +1,35 @@
 window.GAME_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-25（W30土曜答え合わせ: 週枠2件を解決。1605=3,706円(+8.97%,bull,◎)、XOM=156.83ドル(+6.43%,bull,◎)。月枠・季枠は期限未到来のためオープン継続）",
+  "updatedAt": "2026-07-28（W31定期実行: 週枠2件を新規追加（9201日本航空ロング/DALデルタ航空ロング、判定日7/31）。月枠2件(8306,V)・季枠2件(7011,AAPL)はオープン継続。米イラン戦闘停止でWTI-7.4%の82.67ドル、メモリ株暴落(CXMT上海IPO)、日経は一時-2,100円から終値-306円へ切り返す乱高下）",
   "rounds": [
+    {"roundId":"2026-W31","announcedAt":"2026-07-28",
+     "regimeTag":{"vixBucket":"mid","trend":"range","fearGreed":40},
+     "note":"7/27(月)NY: S&P500 7,411.98(+0.05%)、Nasdaq 24,975.82(-0.65%)、VIX 18.58、Fear&Greed 40(fear、7/27)。トランプ大統領が対イラン攻撃計画の承認を見送り(7/24)・パキスタン仲介の和平交渉再開期待で米イラン戦闘停止→WTI-7.4%の82.67ドル(7/27、前週93ドル台から急落)。CXMT(中国メモリ)上海IPOとAI capex懸念でメモリ株暴落(SNDK-12%、MU-5%、WDC-7%、SKハイニックス-8%)、NVDA/AVGO/AMDも安い。7/28(火)東京: 日経は半導体売りで一時-2,100円超の62,700円台→終値64,693.12(-306円/-0.47%)まで切り返す乱高下。ドル円163円台後半(約40年ぶり高値圏)、米10年債4.63-4.64%(7/27)。イベント: FOMC結果7/29(据え置き織り込み65-89%)、日銀会合7/30-31(円安164円でタカ派化観測)、MSFT/META決算7/29引け後、AAPL/AMZN決算7/30引け後、XOM/CVX決算7/31。自己キャリブレーション: 解決済み2件は両方bull的中◎だがBrierは0.740/0.755と無知ライン0.667より悪い(bullに0.30しか配分せず的中=確率が外れていた)。ただしN=2(同一テーゼの日米ペアで実質1)でノイズの可能性大のため、分布の大幅な変更はせず、根拠のない極端な確率への傾斜のみ引き続き回避する。"},
     {"roundId":"2026-W29","announcedAt":"2026-07-18",
      "regimeTag":{"vixBucket":"mid","trend":"down","fearGreed":43},
      "note":"7/17(金)に日米急落。日経64,141.12円(-4.03%、下げ幅歴代5位・キオクシア巨額賠償S安)、S&P500 7,457.69(-1.01%、50日線割れ)、Nasdaq -1.4%(週間-2.9%)。VIX 17.76前後(7/16終値15.67から急上昇)、Fear&Greed 43(fear)。背景: 中国Moonshot AIの高性能オープンモデル公開でAI設備投資減速懸念→半導体急落、米イラン衝突再燃でWTI 80ドル台に急伸(エネルギー株のみ逆行高)、ドル円162.4円、米10年債4.53%。来週: 7/21週に米決算本格化(Alphabet/Tesla等)、FOMC 7/28-29、日銀会合7/30-31。"}
   ],
   "positions": [
+    {"id":"2026-W31-week-JP","roundId":"2026-W31","horizon":"week","market":"JP","direction":"ロング",
+     "ticker":"9201","name":"日本航空",
+     "entry":{"value":2912,"date":"2026-07-27","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/27終値2,912円(+125円/+4.49%、財経新聞・EBC記事で確認)。7/28終値は検索・Yahoo!ファイナンス(キャッシュが6/26時点で停止)とも確認できず、確認可能な直近終値を採用。次回実行時に7/28以降の値で連続性を検証すること"},
+     "scores":{"themeMatch":7,"catalystStrength":7,"supplyDemand":6,"upside":5,"downsideControl":4,"moneyFlow":6},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.25,"price":3080},"base":{"prob":0.45,"price":2950},"bear":{"prob":0.30,"price":2780}},
+     "thesis":"米イラン戦闘停止・和平交渉再開期待でWTIが93→82.67ドル(-7.4%、7/27)へ急落。燃油費は米ドル連動比率が大きいJALには最直接の追い風で、7/27は空運が業種別上昇率トップ(JAL+4.49%)。W29で勝ったエネルギーロングの正確な裏返しポジション。原油が週内80ドル台前半以下で推移し、JALが2,950円以上を維持できれば正しい。Q1決算は8/3で判定日7/31より後のため決算リスクなし。プレモーテム: フーシ派の攻撃再開・交渉決裂で原油+10%なら即bear直行(-5%級)。W29の教訓通り地政学単一要因依存はコイントスに近い→bear 0.30と厚め、bullは0.25に抑制。",
+     "stopLoss":2780,"targetDate":"2026-07-31",
+     "newHighContext":{"dist52wPct":-11.0,"distAthPct":null,"breakout":false,"breakoutVolume":false,"note":"年初来高値3,272円(2026-02-27、Yahoo!ファイナンス表示で確認)を52週高値として計算: (2912-3272)/3272=-11.0%。高値圏ではない"}},
+
+    {"id":"2026-W31-week-US","roundId":"2026-W31","horizon":"week","market":"US","direction":"ロング",
+     "ticker":"DAL","name":"Delta Air Lines",
+     "entry":{"value":86.90,"date":"2026-07-27","tzBasis":"ET","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/27終値86.90ドル(+0.26%、Yahoo Finance検索で確認)。寄りは急伸(プレマーケットで航空・クルーズ株sorging報道)したが引けにかけ失速"},
+     "scores":{"themeMatch":7,"catalystStrength":6,"supplyDemand":4,"upside":6,"downsideControl":5,"moneyFlow":5},
+     "exclusionCheck":{"expectationAhead":false,"shortCover":false,"athLongTerm":false,"postIpoProxy":false},
+     "scenarios":{"bull":{"prob":0.20,"price":92},"base":{"prob":0.45,"price":88},"bear":{"prob":0.35,"price":82}},
+     "thesis":"原油リスクプレミアム剥落(米イラン戦闘停止)の継続でジェット燃料コスト期待が改善するテーゼ。JALと同一マクロ要因の日米ペア(W29のINPEX/XOMと同様、実質1サンプルとして扱うことを明示)。ただし米側は7/27寄り急伸→+0.26%と上げを維持できておらず、需給評価は正直に4。WTIが週内80ドル近辺以下で推移しDALが90ドル台を回復すれば正しい。決算は7月中旬に通過済みでリスクなし。メモリ株ショート(MU等)も検討したが、7/29のMSFT/META決算のcapexガイダンス次第で踏み上げられる二値性が高く見送り。プレモーテム: 停戦決裂で原油再急騰→即bear直行。FOMCタカ派サプライズならリスク資産全般安。7/27の失速が『米市場はこの材料を織り込み済み』のサインである可能性→bear 0.35と最も厚く配分。",
+     "stopLoss":82,"targetDate":"2026-07-31",
+     "newHighContext":{"dist52wPct":null,"distAthPct":null,"breakout":false,"breakoutVolume":null,"note":"52週高値の値・日付未確認のためnull。7月上旬の燃料急騰時に急落しており高値圏ではないと推定"}},
+
     {"id":"2026-W29-week-JP","roundId":"2026-W29","horizon":"week","market":"JP","direction":"ロング",
      "ticker":"1605","name":"ＩＮＰＥＸ",
      "entry":{"value":3401,"date":"2026-07-17","tzBasis":"JST","source":"検索取得","isEstimate":true,"priceType":"終値","isAdjusted":true,"note":"7/20定期実行で確定値に上書き（旧値: 3,514円/7-14）。7/17終値3,401円(-28円/-0.82%、Yahoo!ファイナンス検索)。全面安の7/17に-0.82%と相対的に底堅かった。"},

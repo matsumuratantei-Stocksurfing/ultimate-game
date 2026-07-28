@@ -129,14 +129,15 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:20px}
 <script>
 "use strict";
 /* ===== 変更履歴（松村式バージョン管理） =====
- v2.3.1 (2026-07-04): 【測定バグ修正】想定外のBrier計算を BS=Σp²+1 に修正（従来は Σp² のみで、完全な外れが無知ライン0.667を下回り最良の的中と同スコアになる欠陥があった。想定外を「予測確率0の第4の結果」として扱う）。解決済みデータ0件の時点で修正のため過去データへの影響なし。
+ v2.4.0 (2026-07-28): 【測定強化】確率乖離ラッキー勝ちの検知を追加。judgment◎/○なのにBrier>0.667（的中シナリオへの事前配分が1/3未満＝確率予測としては無知以下）のケースを「確率乖離」として、①勝者統計から自動除外 ②学びカードをA06（期待値思考）に固定 ③各表示にバッジ ④深掘り質問プロンプトに警告文を自動付加 ⑤勝ちパターン候補として記録されていたら整合性警告。契機: W29のINPEX/XOM（Brier 0.740/0.755で◎）をチャットClaudeが「儲かったが確率予測としては失格」と指摘し、従来のラッキー勝ち判定（thesisValidated≠正しい のみ）がこの型を素通しにしていたため。
+ v2.3.1 (2026-07-04):【測定バグ修正】想定外のBrier計算を BS=Σp²+1 に修正（従来は Σp² のみで、完全な外れが無知ライン0.667を下回り最良の的中と同スコアになる欠陥があった。想定外を「予測確率0の第4の結果」として扱う）。解決済みデータ0件の時点で修正のため過去データへの影響なし。
  v2.3.0 (2026-07-03): 観測プールを追加（新高値ブレイク銘柄を毎週日米各5銘柄・機械的ルールで収集し+1週/+4週リターンを前向き追跡。obs.js駆動・6枠ゲームから独立）。
  v2.2.0 (2026-07-03): 新高値コンテキスト（52週高値/上場来高値との距離・ブレイク有無）の記録・表示・採用試験（バケット別成績）を追加。選定ロジックは不変（記録→測定→採用試験の原則）。
  v2.1.0 (2026-07-03): 投資イロハ学習機能を追加（CURRICULUM_V1 30項目・今回の学びカード・習得トラッカー/習得マップ・Claude深掘り質問コピー）。既存のBrier計算・測定ロジックは無変更。
  v2.0.0 (2026-07-03): 全自動モード（data.js駆動・手入力ゼロ）に刷新。GitHub Pages対応。
  v1.0.0 (2026-07-03): 初版（予測JSON手動取り込み版）。
 */
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.4.0";
 /* ================= 定数 ================= */
 const SCHEMA_VERSION = 1;
 const OVERRIDE_KEY = "ultimateGame_overrides_v1";
@@ -230,6 +231,14 @@ let dataProblems = [];
       }
       if(p.resolution && p.resolution.resultPrice && !p.resolution.resultPrice.date)
         dataProblems.push(tag+": 結果価格に日付なし（ルール1違反）");
+      // ガードレール (v2.4.0): 確率乖離（◎/○なのにBrier>0.667）の的中を勝ちパターン候補として
+      // 記録するのは過学習の入口。土曜タスクの記録ミスとして警告する。
+      if(p.resolution && p.resolution.learning && p.resolution.learning.type==="勝ちパターン候補"
+         && (p.resolution.judgment==="◎"||p.resolution.judgment==="○")){
+        const bs = computeBrier(p);
+        if(bs!=null && bs>NAIVE_BRIER)
+          dataProblems.push(tag+": Brier "+bs.toFixed(3)+"（無知ライン超え）の的中が「勝ちパターン候補」として記録されています。確率予測としては外れのため、ノイズまたは規律への降格を検討してください");
+      }
     }
     if(!state.rounds.some(r=>r.roundId===p.roundId)) dataProblems.push(tag+": 親ラウンド "+p.roundId+" が見つかりません");
   });
@@ -286,6 +295,15 @@ function isLuckyWin(pos){
   const r = pos.resolution;
   return r && (r.judgment==="◎"||r.judgment==="○") && r.thesisValidated!=="正しい";
 }
+/* 確率乖離ラッキー勝ち (v2.4.0): 結果は◎/○なのにBrierが無知ライン超え。
+   的中シナリオへの事前配分が1/3未満＝「わからない」と言うより悪い確率予測で当たった状態。
+   論拠ラッキー勝ち(isLuckyWin)とは別の型として検知し、勝者統計から除外する。 */
+function isCalibDivergent(pos){
+  const r = pos.resolution;
+  if(!r || !(r.judgment==="◎"||r.judgment==="○")) return false;
+  const bs = computeBrier(pos);
+  return bs!=null && bs > NAIVE_BRIER;
+}
 function resolvedPositions(filter){
   filter = filter||{};
   return state.positions
@@ -315,9 +333,12 @@ function discriminationStats(){
   const gate = gateStatus(resolved);
   const winners = resolved.filter(p=>{
     const r=p.resolution;
-    return (r.judgment==="◎"||r.judgment==="○") && r.thesisValidated==="正しい";
+    // 勝者＝結果・論拠・確率の三拍子が揃った件のみ。確率乖離（Brier>0.667の的中）は
+    // 「儲かったが確率予測としては外れ」なので勝者の教師データに入れない (v2.4.0)。
+    return (r.judgment==="◎"||r.judgment==="○") && r.thesisValidated==="正しい" && !isCalibDivergent(p);
   });
   const luckyWins = resolved.filter(isLuckyWin);
+  const calibDivergents = resolved.filter(p=>isCalibDivergent(p) && !isLuckyWin(p));
   const losers = resolved.filter(p=>["△","✗"].includes(p.resolution.judgment));
   const rows = CRITERIA.map(c=>{
     const w = winners.map(p=>p.scores?.[c.key]).filter(v=>typeof v==="number");
@@ -336,7 +357,7 @@ function discriminationStats(){
     return {key:c.key, label:c.label, winMean:wm, loseMean:lm, disc, varAll:vr, verdict,
       retired: !!state.retiredCriteria[c.key]};
   });
-  return {gate, winners, losers, luckyWins, rows, resolved};
+  return {gate, winners, losers, luckyWins, calibDivergents, rows, resolved};
 }
 function disciplineStats(){
   const resolved = state.positions.filter(p=>p.resolution && !p.resolution.isCash);
@@ -395,9 +416,9 @@ function weakestCurriculumLayer(){
   });
   return worst;
 }
-// 選択ロジック（優先順位: ①ラッキーウィン→A06固定 ②弱点層上書き ③外れ→層対応 ④的中→全体から。②③④は表示回数最少→同数ランダム）
+// 選択ロジック（優先順位: ①ラッキーウィン（論拠外れ or 確率乖離）→A06固定 ②弱点層上書き ③外れ→層対応 ④的中→全体から。②③④は表示回数最少→同数ランダム）
 function selectCurriculumId(pos){
-  if(isLuckyWin(pos)) return "A06";
+  if(isLuckyWin(pos) || isCalibDivergent(pos)) return "A06";
   const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
   let pool;
   const weak = weakestCurriculumLayer();
@@ -435,11 +456,16 @@ function curriculumCardHtml(pos){
   if(!item) return "";
   const prog = loadJsonKey(CURRICULUM_PROGRESS_KEY);
   const lucky = isLuckyWin(pos);
-  const subdued = !lucky && !isMissJudgment(pos); // 的中時は控えめトーン
+  const calib = isCalibDivergent(pos);
+  const subdued = !lucky && !calib && !isMissJudgment(pos); // 的中時は控えめトーン
   const understood = prog[item.id] && prog[item.id].understood;
   let html = "<div class='panel learn-card"+(subdued?" subdued":"")+"'>";
   html += "<div style='font-size:14px'><b>📖 今回の学び: "+esc(item.term)+"</b> <span class='tag'>"+esc(CURRICULUM_LAYER_LABEL[item.layer])+"</span></div>";
   if(lucky) html += "<div class='warn' style='font-size:12px;margin-top:4px'>今回は的中しましたが、ラッキーウィン判定です。</div>";
+  else if(calib){
+    const bs = computeBrier(pos);
+    html += "<div class='warn' style='font-size:12px;margin-top:4px'>今回は的中しましたが、Brier "+(bs!=null?bs.toFixed(3):"—")+"は無知ライン0.667より悪く「確率乖離ラッキー勝ち」判定です（当たったシナリオに1/3未満しか配分していなかった）。</div>";
+  }
   html += "<div style='margin-top:6px;font-size:13px'>"+esc(item.principle)+"</div>";
   html += "<div style='margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'>";
   html += "<span class='mut' style='font-size:12px'>習得マップ: "+curriculumReadCount()+"/"+CURRICULUM_V1.length+"</span>";
@@ -456,14 +482,22 @@ function deepDiveText(pos){
   const bs = computeBrier(pos);
   const r = pos.resolution;
   const hitLabel = r.whichScenarioHit==="想定外" ? "想定外" : (SCN_LABEL[r.whichScenarioHit]||"—");
+  let caveat = "";
+  if(isLuckyWin(pos)){
+    caveat = "\n※注意: この件は「論拠ラッキー勝ち」判定です（結果は"+(r.judgment||"—")+"だが論拠検証="+(r.thesisValidated||"—")+"）。この結果を成功例として一般化せず、理由の間違った的中として扱ってください。\n";
+  } else if(isCalibDivergent(pos)){
+    caveat = "\n※注意: この件は「確率乖離ラッキー勝ち」判定です。結果は"+(r.judgment||"—")+"ですが、Brier "+(bs!=null?bs.toFixed(3):"—")+"は無知ライン0.667より悪く、的中したシナリオへの事前配分は1/3未満でした。つまり確率予測としては外れです。この結果を学習項目の成功例として一般化せず、「結果の勝ち」と「確率の置き方の外れ」を分離して解説してください。学びタイプの既定はノイズです。\n";
+  }
   return "【究極ゲームからの深掘り質問】\n"
     + "学習項目: "+item.term+"\n"
     + "原理: "+item.principle+"\n\n"
     + "今回の予測: "+HORIZONS[pos.horizon]+"次 / "+(pos.name||pos.ticker)+" / 予測"+pos.direction
     + " → 結果"+(rp!=null?fmtPct(rp):"—")+"・シナリオ"+hitLabel
-    + "（Brier判定: "+(bs!=null?bs.toFixed(3):"—")+" / "+(r.judgment||"—")+"）\n\n"
-    + "この原理について、今回の予測結果と結びつけて詳しく解説してください。\n"
-    + "特に「なぜこの結果になったのか」の要因分解と、次回の予測で確認すべきチェックポイントを教えてください。";
+    + "（Brier判定: "+(bs!=null?bs.toFixed(3):"—")+" / "+(r.judgment||"—")+" / 論拠検証"+(r.thesisValidated||"—")+" / 学びタイプ"+((r.learning&&r.learning.type)||"—")+"）\n"
+    + caveat
+    + "\nこの原理について、今回の予測結果と結びつけて詳しく解説してください。\n"
+    + "特に「なぜこの結果になったのか」の要因分解と、次回の予測で確認すべきチェックポイントを教えてください。\n"
+    + "なお要因分解は断定ではなく検証可能な仮説として提示し、N=1から勝ちパターンを結論しないでください。";
 }
 async function copyToClipboard(text){
   try{ await navigator.clipboard.writeText(text); return true; }
@@ -609,7 +643,7 @@ function renderDash(){
       html += "<tr class='rowlink' data-pos='"+esc(p.id)+"'><td>"+posLabel(p)+"</td><td><b>"+esc(p.ticker)+"</b></td>";
       html += "<td class='num "+(rp!=null?pctClass(rp):"")+"'>"+(rp!=null?fmtPct(rp):"—")+"</td>";
       html += "<td>"+esc(p.resolution.whichScenarioHit==="想定外"?"想定外":SCN_LABEL[p.resolution.whichScenarioHit]||"—")+"</td>";
-      html += "<td>"+esc(p.resolution.judgment||"—")+(isLuckyWin(p)?" <span class='tag a'>ラッキー勝ち</span>":"")+"</td>";
+      html += "<td>"+esc(p.resolution.judgment||"—")+(isLuckyWin(p)?" <span class='tag a'>ラッキー勝ち</span>":(isCalibDivergent(p)?" <span class='tag a'>確率乖離</span>":""))+"</td>";
       html += "<td>"+esc(p.resolution.thesisValidated||"—")+"</td>";
       html += "<td class='num'>"+(bs!=null?bs.toFixed(3):"—")+"</td></tr>";
     });
@@ -678,7 +712,7 @@ function showDetail(id){
     html += "<dt>結果価格</dt><dd>"+ppText(rr.resultPrice)+"</dd>";
     html += "<dt>騰落</dt><dd class='"+(rp!=null?pctClass(rp):"")+"'>"+(rp!=null?fmtPct(rp):"—")+(p.direction==="ショート"?"（ショート実効）":"")+"</dd>";
     html += "<dt>シナリオ判定</dt><dd>"+esc(rr.whichScenarioHit==="想定外"?"想定外":(SCN_LABEL[rr.whichScenarioHit]||"—"))+"　Brier "+(bs!=null?bs.toFixed(3):"—")+"</dd>";
-    html += "<dt>judgment</dt><dd>"+esc(rr.judgment||"—")+(isLuckyWin(p)?" <span class='tag a'>ラッキー勝ち（勝者統計から除外）</span>":"")+"</dd>";
+    html += "<dt>judgment</dt><dd>"+esc(rr.judgment||"—")+(isLuckyWin(p)?" <span class='tag a'>ラッキー勝ち（勝者統計から除外）</span>":(isCalibDivergent(p)?" <span class='tag a'>確率乖離ラッキー勝ち（Brier&gt;0.667・勝者統計から除外）</span>":""))+"</dd>";
     html += "<dt>論拠検証</dt><dd>"+esc(rr.thesisValidated||"—")+"</dd>";
     html += "<dt>損切り規律</dt><dd>"+esc(rr.stopLossDiscipline||"—")+"</dd>";
     html += "<dt>学び</dt><dd>"+(rr.learning? "<span class='tag p'>"+esc(rr.learning.type)+"</span> "+esc(rr.learning.note||""):"—")+"</dd>";
@@ -716,7 +750,7 @@ function renderRounds(){
       html += "<td class='num'>"+(r2&&r2.resultPrice? fmtNum(r2.resultPrice.value)+(r2.resultPrice.isEstimate?"<span class='warn'>*</span>":""):"—")+"</td>";
       html += "<td class='num "+(rp!=null?pctClass(rp):"")+"'>"+(rp!=null?fmtPct(rp):"—")+"</td>";
       html += "<td class='num'>"+(bs!=null? bs.toFixed(3):"—")+"</td>";
-      html += "<td>"+(r2? esc(r2.judgment||(r2.isCash?"記録":"—"))+(isLuckyWin(p)?" <span class='tag a'>ラッキー</span>":""):"<span class='dim'>未解決</span>")+"</td>";
+      html += "<td>"+(r2? esc(r2.judgment||(r2.isCash?"記録":"—"))+(isLuckyWin(p)?" <span class='tag a'>ラッキー</span>":(isCalibDivergent(p)?" <span class='tag a'>確率乖離</span>":"")):"<span class='dim'>未解決</span>")+"</td>";
       html += "<td>"+(r2? esc(r2.thesisValidated||"—"):"—")+"</td>";
       html += "<td>"+(r2&&r2.learning? "<span class='tag "+(r2.learning.type==="ノイズ"?"":"p")+"'>"+esc(r2.learning.type)+"</span>":"—")+"</td></tr>";
     });
@@ -750,7 +784,7 @@ function renderMeasure(){
     html += "<div class='gatebar'><div style='width:"+Math.min(100, Math.round(ds.gate.n/GATE_MIN_RESOLVED*100))+"%'></div></div></div>";
   }
   html += "<div class='panel'>";
-  html += "<div class='mut' style='font-size:12px;margin-bottom:6px'>勝者＝◎/○かつ論拠「正しい」（"+ds.winners.length+"件）　敗者＝△/✗（"+ds.losers.length+"件）　ラッキー勝ち除外（"+ds.luckyWins.length+"件）</div>";
+  html += "<div class='mut' style='font-size:12px;margin-bottom:6px'>勝者＝◎/○かつ論拠「正しい」かつBrier≦0.667（"+ds.winners.length+"件）　敗者＝△/✗（"+ds.losers.length+"件）　除外: 論拠ラッキー勝ち"+ds.luckyWins.length+"件・確率乖離"+ds.calibDivergents.length+"件</div>";
   html += "<table><tr><th>基準</th><th class='num'>勝者平均</th><th class='num'>敗者平均</th><th class='num'>差(disc)</th><th class='num'>全体分散</th><th>判定</th><th>操作</th></tr>";
   ds.rows.forEach(r=>{
     html += "<tr"+(r.retired?" style='opacity:.45'":"")+"><td>"+r.label+(r.retired?" <span class='tag r'>削除済み</span>":"")+"</td>";
